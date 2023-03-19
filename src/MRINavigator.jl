@@ -1,5 +1,15 @@
 module MRINavigator
 
-# Write your package code here.
+using MRIReco
+using MRICoilSensitivitiess
 
-end
+
+include("AdjustData.jl")
+include("CoilSensMap.jl")
+include("NavParameters.jl")
+include("Reconstruction.jl")
+include("SpineCenterline.jl")
+
+
+
+end # module
