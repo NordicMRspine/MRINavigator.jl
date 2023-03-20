@@ -1,5 +1,5 @@
 # FUNCTION TO COMPUTE THE COIL SENSITIVITY MAP
-function CompSensit(acq)
+function CompSensit(acq::AcquisitionData)
 
     sensit = espirit(acq,(6,6),30,eigThresh_1=0.005, eigThresh_2=0)
     slices = numSlices(acq)

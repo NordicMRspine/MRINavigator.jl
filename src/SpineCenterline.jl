@@ -19,7 +19,7 @@ Returns the image data and acquisition data.
 function ReconstructMap(path_ref::String)
 
     raw = RawAcquisitionData(ISMRMRDFile(path_ref))
-    OrderSlice!(raw)
+    OrderSlices!(raw)
     acq = AcquisitionData(raw, estimateProfileCenter=true)
     sensit = CompSensit(acq)
     img = Reconstruct(acq, sensit)
