@@ -1,7 +1,7 @@
 [TestData]
-git-tree-sha1 = "c7345a52b6930ee47bca4abe96d410d5c9eaefa7"
+git-tree-sha1 = "23e1b256c8f73b4f21685e302c1804bd1dd8e700"
 lazy = true
 
     [[TestData.download]]
-    sha256 = "cec3a9b89b2e391393d0f68e4bc12a9fa6cf358b3cdf79496dc442d52b8dd528"
-    url = "https://github.com/NordicMRspine/MRINavigator/tree/setup/test/Data"
+    sha256 = "691ac14fffade270b84ffe691df0ea1b1c19e7e93fcc7a0ee24ebfb976769943"
+    url = "https://github.com/NordicMRspine/MRINavigator/tree/setup/test/TestData.tar"

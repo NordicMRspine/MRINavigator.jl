@@ -9,7 +9,7 @@ using LazyArtifacts
 const datadir = joinpath(artifact"TestData")
 @info "The test data is located at $datadir."
 
-const tmpdir  = @get_scratch!("tmp")
+const tmpResdir  = @get_scratch!("tmp")
 @info "If you want to check the output of the tests, please head to $tmpdir."
 
 
