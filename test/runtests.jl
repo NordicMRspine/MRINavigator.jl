@@ -1,6 +1,9 @@
 using MRINavigator
+using FileIO
+using MRIReco
 using Test
 
-@testset "MRINavigator.jl" begin
-    # Write your tests here.
-end
+using Scratch
+using Lazyartifacts
+
+include("DataTests.jl")
