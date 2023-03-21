@@ -1,7 +1,7 @@
-[MRInavigatorTestData]
-git-tree-sha1 = "c56f47ff503a42e8c51bd90a0a63be20b461c362"
+[TestData]
+git-tree-sha1 = "c7345a52b6930ee47bca4abe96d410d5c9eaefa7"
 lazy = true
 
-    [[MRINavigatorTestData.download]]
-    sha256 = "3ed1e5c03455460b01a67a51b9d5fb74cd4a1c9f3caf6595f901b81a250e0f1c"
-    url = "http://media.tuhh.de/ibi/mrireco/MRIRecoTestData.tar.gz"
+    [[TestData.download]]
+    sha256 = "cec3a9b89b2e391393d0f68e4bc12a9fa6cf358b3cdf79496dc442d52b8dd528"
+    url = "https://github.com/NordicMRspine/MRINavigator/tree/setup/test/Data"

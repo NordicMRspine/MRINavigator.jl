@@ -1,7 +1,8 @@
 module MRINavigator
 
 using MRIReco
-using MRICoilSensitivitiess
+using MRICoilSensitivities
+using Setfield
 
 
 include("AdjustData.jl")
