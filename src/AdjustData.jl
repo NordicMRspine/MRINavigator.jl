@@ -36,10 +36,10 @@ function ExtractFlags(rawd::RawAcquisitionData)
 end
 
 
-function ExtractNoiseData!(rawd::RawAcquisitionData, flags::Array{Int64})
+function ExtractNoiseData!(rawd::RawAcquisitionData, flags::Array{Int64}) 
 
     total_num = length(rawd.profiles)
-    noisemat = Matrix{ComplexF32, 2}
+    noisemat = Matrix{ComplexF32}
 
     for ii=1:total_num
 
@@ -72,13 +72,10 @@ end
 
 
 # FUNCTION FOR REMOVING THE REFERENCE DATA
-function RemoveRef!(rawd)
+function RemoveRef!(rawd, slices, echoes)
 
-    #this is correct only if we are using phase stabilizaion
-    numberslice = rawd.params["enc_lim_slice"].maximum +1
-    numberecho = length(rawd.params["TE"])
-    #numberrep = rawd.params["enc_lim_repetition"].maximum +1
-    removeIndx = numberslice*(numberecho+1) #*numberrep
+    #Apply this only if using phase stabilizaion
+    removeIndx = slices*(echoes+1) #*numberrep
     deleteat!(rawd.profiles, 1:removeIndx)
 
 end

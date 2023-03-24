@@ -5,14 +5,16 @@ version = "0.1.0"
 
 [deps]
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 MRICoilSensitivities = "c57eb701-aafc-44a2-a53c-128049758959"
 MRIReco = "bdf86e05-2d2b-5731-a332-f3fe1f9e047f"
+PolygonOps = "647866c9-e3ac-4575-94e7-e3d426903924"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 
 [compat]
-julia = "1.1"
+julia = "1.3"
 
 [extras]
 LazyArtifacts = "4af54fe1-eca0-43a8-85a7-787d91b784e3"

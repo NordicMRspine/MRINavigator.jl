@@ -27,3 +27,15 @@ function Reconstruct(acqd::AcquisitionData,
     img = dropdims(img, dims = tuple(findall(size(img) .== 1)...))
     return img
 end
+
+
+# FUNCTION TO RECONSTRUCT DATA DIRECTLY
+function directreco(acq)
+
+    params = Dict{Symbol, Any}()
+    params[:reco] = "direct"
+    params[:reconSize] = (acq.encodingSize[1],acq.encodingSize[2])
+
+    return reconstruction(acq, params)
+
+end
