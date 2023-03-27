@@ -1,4 +1,4 @@
-export ReconstructSaveMap
+export ReconstructSaveMap, niftiSaveMap
 
 
 # FUNCTION TO RECONSTRUCT AND SAVE THE COIL SENSITIVITY MAPS
@@ -29,7 +29,7 @@ function ReconstructMap(path_ref::String)
 end
 
 #FUNCTION TO SAVE THE SENSITIVITY MAPS AS NIFTI FILES, FOR COMPATIBILITY WITH SCT
-function niftiSaveMap(img::AbstractArray{T,6}, acq::AcquisitionData, path_nifti::String) where {T}
+function niftiSaveMap(img::AbstractArray{T}, acq::AcquisitionData, path_nifti::String) where {T}
 
     img = img.data[:, :, :]
     voxel_tmp = fieldOfView(acq)[1:2]./encodingSize(acq)

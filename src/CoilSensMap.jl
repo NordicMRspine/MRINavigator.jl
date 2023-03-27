@@ -1,3 +1,6 @@
+export CompSensit, ResizeSensit!, CompRoughMask
+
+
 # FUNCTION TO COMPUTE THE COIL SENSITIVITY MAP
 function CompSensit(acq::AcquisitionData, thresh = 0.14)
 
@@ -9,13 +12,14 @@ function CompSensit(acq::AcquisitionData, thresh = 0.14)
 
     for ii = 1:slices
 
-        mask_slice = findConnectedComponent(mask[:,:,ii], ii)
-        mask_slice = removeBehindBack(mask_slice)
-        mask_slice = homogeneousMask(mask_slice)
+        mask_slice = mask[:,:,ii]
+        findConnectedComponent!(mask_slice)
+        removeBehindBack!(mask_slice)
+        homogeneousMask!(mask_slice)
         mask[:,:,ii] = mask_slice
 
     end
-    for ii=1:coils
+    for ii = 1:coils
         sensit[:,:,:,ii] = sensit[:,:,:,ii] .* mask
     end
 
@@ -39,7 +43,7 @@ function CompRoughMask(acq::AcquisitionData, slices::Int64, thresh = 0.14)
 end
 
 
-function findConnectedComponent(mask_slice::Array{T,2}, slice::Int64) where {T}
+function findConnectedComponent!(mask_slice::Array{T,2}) where {T}
 
     components = label_components(mask_slice)
     measured_area = component_lengths(components)
@@ -48,11 +52,9 @@ function findConnectedComponent(mask_slice::Array{T,2}, slice::Int64) where {T}
     cartes_index_blob = findall(x -> x!=blob, components)
     mask_slice[cartes_index_blob] .= 0
 
-    return mask_slice
-
 end
 
-function removeBehindBack(mask_slice::Array{T,2}) where{T}
+function removeBehindBack!(mask_slice::Array{T,2}) where{T}
 
     # remove noisy voxels on the left of the image
     # corresponding to the back of the subject
@@ -69,35 +71,34 @@ function removeBehindBack(mask_slice::Array{T,2}) where{T}
         mask_slice[:,jj].=0
     end
 
-    return mask_slice
-
 end
 
-function homogeneousMask(mask_slice::Array{T,2}) where{T}
+function homogeneousMask!(mask_slice::Array{T,2}) where{T}
 
     cartes_index_slice = CartesianIndices(mask_slice)
-    mask_slice = convert(BitMatrix, mask_slice)
-    hull = convexhull(mask_slice)
+    Bimask_slice = convert(BitMatrix, mask_slice)
+    hull = convexhull(Bimask_slice)
     push!(hull, hull[1])
     inside = [inpolygon(p, hull; in=true, on=true, out=false) for p in cartes_index_slice]
-
-    return inside
+    mask_slice[inside] .= 1
 
 end
 
 # FUNCTION TO INTERPOLATE AND REMOVE OUTFLINE OF THE COIL SENSITIVITY MAP
-function ResizeSensit!(sensit, acq, acqd)
+function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
 
     # Define the relevant sensit region assuming the same slices center between ref and image data
-    (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acq, acqd)
+    (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
 
     freq_enc_FoV_disc = Int64((freq_enc_FoV[1] - freq_enc_FoV[2]) / (freq_enc_FoV[1]/freq_enc_samples[1]) / 2)
     phase_enc_FoV_disc = Int64((phase_enc_FoV[1] - phase_enc_FoV[2]) / (phase_enc_FoV[1]/phase_enc_samples[1]) / 2)
 
+    # Remove the sensit data that are not included in the image data FoV
     sensit = sensit[freq_enc_FoV_disc+1:end-freq_enc_FoV_disc, phase_enc_FoV_disc+1:end-phase_enc_FoV_disc, :, :]
     
+    # Interpolate the sensit data to the image data
     cartes_index = findall(x -> x!=0, sensit)
-    mask = zeros(Float32, size(sensit)) # build mask around the ROI
+    mask = zeros(Float32, size(sensit)) # compute the mask
     for ii in cartes_index
         mask[ii] = 1
     end
@@ -109,17 +110,17 @@ function ResizeSensit!(sensit, acq, acqd)
     for ii in cartes_index
         mask[ii] = 0
     end
-    sensit = mask.*sensit
+    sensit = mask .* sensit
 
 end
 
 # FUNCTION TO INTERPOLATE AND REMOVE OUTFLINE OF THE COIL SENSITIVITY MAP
-function Find_scaling_sensit(acq, acqd)
+function Find_scaling_sensit(acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
 
-    freq_enc_FoV = [acq.fov[1], acqd.fov[1]]
-    freq_enc_samples = [acq.encodingSize[1], acqd.encodingSize[1]]
-    phase_enc_FoV = [acq.fov[2], acqd.fov[2]]
-    phase_enc_samples = [acq.encodingSize[2], acqd.encodingSize[2]]
+    freq_enc_FoV = [acqMap.fov[1], acqData.fov[1]]
+    freq_enc_samples = [acqMap.encodingSize[1], acqData.encodingSize[1]]
+    phase_enc_FoV = [acqMap.fov[2], acqData.fov[2]]
+    phase_enc_samples = [acqMap.encodingSize[2], acqData.encodingSize[2]]
 
     return freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples
 

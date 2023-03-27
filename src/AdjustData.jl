@@ -1,4 +1,4 @@
-export OrderSlices!
+export OrderSlices!, ExtractFlags, ExtractNoiseData!, ReverseBipolar!, RemoveRef!
 
 # FUNCTION TO SPATIALLY ORDER THE SLICES IN THE RAW DATA STRUCTURE
 # might not work for Philips data
@@ -6,7 +6,7 @@ export OrderSlices!
 function OrderSlices!(rawd::RawAcquisitionData)
 
     total_num = length(rawd.profiles)
-    slices = zeros(Float32, total_num)
+    slices = zeros(typeof(rawd.profiles[1].head.position[3]), total_num)
 
     for ii = 1:total_num
         slices[ii] = rawd.profiles[ii].head.position[3]
@@ -39,7 +39,7 @@ end
 function ExtractNoiseData!(rawd::RawAcquisitionData, flags::Array{Int64}) 
 
     total_num = length(rawd.profiles)
-    noisemat = Matrix{ComplexF32}
+    noisemat = Matrix{typeof(map.profiles[1].data)}
 
     for ii=1:total_num
 
