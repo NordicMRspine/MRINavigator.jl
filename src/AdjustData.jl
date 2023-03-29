@@ -79,13 +79,13 @@ function RemoveRef!(rawData::RawAcquisitionData, slices::Union{Int64, Nothing}, 
     if slices === nothing
         numSlices = rawData.params["enc_lim_slice"].maximum+1
     else
-        slices == 1
+        slices == size(slices, 1)
     end
     if echoes !== nothing
-        if echoes != 0
-            numEchoes = 1
+        if 0 in echoes
+            numEchoes = size(echoes, 1) +1
         else
-            numEchoes = 2
+            numEchoes = size(echoes, 1)
         end
     else
         numEchoes = size(rawData.params["TE"],1)+1
