@@ -11,7 +11,7 @@ end
 
 
 """
-        (img, acq) = econstruct_maps(path_ref::String)
+        (img, acq) = Reconstruct_maps(path_ref::String)
 
 Reconstructs the sensitivity maps.
 Returns the image data and acquisition data.

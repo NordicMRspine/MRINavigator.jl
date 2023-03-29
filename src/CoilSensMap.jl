@@ -20,7 +20,7 @@ function CompSensit(acq::AcquisitionData, thresh = 0.14)
 
     end
     for ii = 1:coils
-        sensit[:,:,:,ii] = sensit[:,:,:,ii] .* mask
+        sensit[:,:,:,ii] = real.(sensit[:,:,:,ii]) .* mask + imag.(sensit[:,:,:,ii])
     end
 
     return sensit
