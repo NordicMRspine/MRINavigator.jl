@@ -8,7 +8,7 @@ export Reconstruct, directreco
 # FUNCTION FOR SENSE RECONSTRUCTION
 function Reconstruct(acqd::AcquisitionData,
                     sensit::Array{Complex{T},4},
-                    noisemat::Union{Array{Complex{T},4},Nothing} = nothing) where {T} 
+                    noisemat::Union{Array{Complex{T}},Nothing} = nothing) where {T} 
 
     params = Dict{Symbol, Any}()
     params[:reco] = "multiCoil"

@@ -1,4 +1,4 @@
-export OrderSlices!, ExtractFlags, ExtractNoiseData!, ReverseBipolar!, RemoveRef!
+export OrderSlices!, ExtractFlags, ExtractNoiseData!, ReverseBipolar!, RemoveRef!, CopyTE!, AdjustSubsampleIndices!
 
 # FUNCTION TO SPATIALLY ORDER THE SLICES IN THE RAW DATA STRUCTURE
 # might not work for Philips data
@@ -36,16 +36,16 @@ function ExtractFlags(rawd::RawAcquisitionData)
 end
 
 
-function ExtractNoiseData!(rawd::RawAcquisitionData, flags::Array{Int64}) 
+function ExtractNoiseData!(rawData::RawAcquisitionData, flags::Array{Int64}) 
 
-    total_num = length(rawd.profiles)
-    noisemat = Matrix{typeof(map.profiles[1].data)}
+    total_num = length(rawData.profiles)
+    noisemat = Matrix{typeof(rawData.profiles[1].data)}
 
     for ii=1:total_num
 
         if flags[ii,19] == true
-            noisemat = rawd.profiles[ii].data
-            deleteat!(rawd.profiles, ii)
+            noisemat = rawData.profiles[ii].data
+            deleteat!(rawData.profiles, ii)
             break
         end
 
@@ -72,10 +72,47 @@ end
 
 
 # FUNCTION FOR REMOVING THE REFERENCE DATA
-function RemoveRef!(rawd, slices, echoes)
+function RemoveRef!(rawData::RawAcquisitionData, slices::Union{Int64, Nothing}, echoes::Union{Int64, Nothing})
+
+    numSlices = 0
+    numEchoes = 0
+    if slices === nothing
+        numSlices = rawData.params["enc_lim_slice"].maximum+1
+    else
+        slices == 1
+    end
+    if echoes !== nothing
+        if echoes != 0
+            numEchoes = 1
+        else
+            numEchoes = 2
+        end
+    else
+        numEchoes = size(rawData.params["TE"],1)+1
+    end
 
     #Apply this only if using phase stabilizaion
-    removeIndx = slices*(echoes+1) #*numberrep
-    deleteat!(rawd.profiles, 1:removeIndx)
+    removeIndx = numSlices*(numEchoes) #*numberrep
+    deleteat!(rawData.profiles, 1:removeIndx)
+
+end
+
+
+# FUNCTION TO COPY TE VALUES FROM RAW TO ACQ STRUCTURE
+function CopyTE!(rawData::RawAcquisitionData, acqData::AcquisitionData)
+
+    for ii=1:size(acqData.kdata)[1]
+        acqData.traj[ii].TE = rawData.params["TE"][ii]
+    end
+
+end
+
+function AdjustSubsampleIndices!(acqData::AcquisitionData)
+
+    if isempty(acqData.subsampleIndices[1])
+        for ii = 1:size(acqData.subsampleIndices)[1]
+            acqd.subsampleIndices[ii]=1:size(acqd.kdata[1,1,1])[1]
+        end
+    end
 
 end
