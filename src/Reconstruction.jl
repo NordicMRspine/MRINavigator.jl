@@ -1,7 +1,7 @@
 export Reconstruct, directreco
 
 """
-        Reconstruct(acqd, sensit, noisemat)
+        Reconstruct(acqd, sensit, noisemat)        
 
 """
 

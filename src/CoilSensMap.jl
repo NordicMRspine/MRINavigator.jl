@@ -2,7 +2,7 @@ export CompSensit, ResizeSensit!, CompRoughMask
 
 
 # FUNCTION TO COMPUTE THE COIL SENSITIVITY MAP
-function CompSensit(acq::AcquisitionData, thresh = 0.14)
+function CompSensit(acq::AcquisitionData, thresh = 0.138)
 
     sensit = espirit(acq,(6,6),30,eigThresh_1=0.005, eigThresh_2=0)
     slices = numSlices(acq)
@@ -27,7 +27,7 @@ function CompSensit(acq::AcquisitionData, thresh = 0.14)
 
 end
 
-function CompRoughMask(acq::AcquisitionData, slices::Int64, thresh = 0.14)
+function CompRoughMask(acq::AcquisitionData, slices::Int64, thresh = 0.138)
 
     img = directreco(acq)
     I_sum = sqrt.(sum(abs.(img) .^ 2, dims = 5)) .+ eps()

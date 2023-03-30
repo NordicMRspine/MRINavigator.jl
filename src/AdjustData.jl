@@ -111,7 +111,7 @@ function AdjustSubsampleIndices!(acqData::AcquisitionData)
 
     if isempty(acqData.subsampleIndices[1])
         for ii = 1:size(acqData.subsampleIndices)[1]
-            acqd.subsampleIndices[ii]=1:size(acqd.kdata[1,1,1])[1]
+            acqData.subsampleIndices[ii]=1:size(acqData.kdata[1,1,1])[1]
         end
     end
 
