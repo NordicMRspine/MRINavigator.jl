@@ -1,11 +1,15 @@
 export Reconstruct, directreco
 
 """
-        Reconstruct(acqd, sensit, noisemat)        
+    img = Reconstruct(acqd::AcquisitionData, sensit::Array{Complex{T},4}, noisemat::Union{Array{Complex{T}},Nothing} = nothing)
 
+Return reconstructed image. Only single repetition in input.
+
+# Arguments
+* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `sensit::Array{Complex{T},4}` - coil sensitivity map matric computed with CompSensit(acq::AcquisitionData, thresh = 0.135)
+* `noisemat::Union{Array{Complex{T}},Nothing} = nothing` - noise data extracted from the raw datat structure with ExtractNoiseData!(rawData::RawAcquisitionData)
 """
-
-# FUNCTION FOR SENSE RECONSTRUCTION
 function Reconstruct(acqd::AcquisitionData,
                     sensit::Array{Complex{T},4},
                     noisemat::Union{Array{Complex{T}},Nothing} = nothing) where {T} 
@@ -15,7 +19,7 @@ function Reconstruct(acqd::AcquisitionData,
     params[:solver] = "cgnr"
     params[:regularization] = "L2"
     params[:λ] = 1.e-2
-    params[:iterations] = 20
+    params[:iterations] = 10
     params[:reconSize] = (acqd.encodingSize[1],acqd.encodingSize[2])
     params[:estimateProfileCenter] = true
     params[:senseMaps] = sensit
@@ -29,8 +33,15 @@ function Reconstruct(acqd::AcquisitionData,
 end
 
 
-# FUNCTION TO RECONSTRUCT DATA DIRECTLY
-function directreco(acq)
+"""
+    img = directreco(acq::AcquisitionData)
+
+Return reconstructed image. Reconstruct coils separately.
+
+# Arguments
+* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+"""
+function directreco(acq::AcquisitionData)
 
     params = Dict{Symbol, Any}()
     params[:reco] = "direct"

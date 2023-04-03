@@ -1,10 +1,19 @@
 export CompSensit, ResizeSensit!, CompRoughMask
 
 
-# FUNCTION TO COMPUTE THE COIL SENSITIVITY MAP
-function CompSensit(acq::AcquisitionData, thresh = 0.138)
+"""
+    sensit = CompSensit(acq::AcquisitionData, thresh = 0.135)
 
-    sensit = espirit(acq,(6,6),30,eigThresh_1=0.005, eigThresh_2=0)
+Computes the coils sensitivity map. Masking tuned for spinal cord imaging.
+Use MRICoilSensitivities.jl alternatively.
+
+# Arguments
+* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `tresh::Float64` - masking treshold: increase for reduced mask size, decrease for extended mask size
+"""
+function CompSensit(acq::AcquisitionData, thresh = 0.135)
+
+    sensit = espirit(acq,(6,6),30,eigThresh_1=0.02, eigThresh_2=0)
     slices = numSlices(acq)
     coils = numChannels(acq)
     # compute mask
@@ -20,14 +29,24 @@ function CompSensit(acq::AcquisitionData, thresh = 0.138)
 
     end
     for ii = 1:coils
-        sensit[:,:,:,ii] = sensit[:,:,:,ii] .* mask
+        sensit[:,:,:,ii] = (real.(sensit[:,:,:,ii]) .* mask) + (imag.(sensit[:,:,:,ii]) .* mask .* im)
     end
 
     return sensit
 
 end
 
-function CompRoughMask(acq::AcquisitionData, slices::Int64, thresh = 0.138)
+"""
+    mask = CompRoughMask(acq::AcquisitionData, slices::Int64, thresh)
+
+Return a rough mask. May not be homogeneous.
+
+# Arguments
+* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `slices::Int64` - number of slices in acquisition data
+* `tresh::Float64` - masking treshold: increase for reduced mask size, decrease for extended mask size
+"""
+function CompRoughMask(acq::AcquisitionData, slices::Int64, thresh)
 
     img = directreco(acq)
     I_sum = sqrt.(sum(abs.(img) .^ 2, dims = 5)) .+ eps()
@@ -84,7 +103,17 @@ function homogeneousMask!(mask_slice::Array{T,2}) where{T}
 
 end
 
-# FUNCTION TO INTERPOLATE AND REMOVE OUTFLINE OF THE COIL SENSITIVITY MAP
+"""
+    sensit = ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData)
+
+Resize and resample the coil sensitivity map to match the acqusiition data filed of view and resolution.
+This step is needed for the image reconstruction to run.
+
+# Arguments
+* `sensit::Array{Complex{T},4}` - output of CompSensit(acq::AcquisitionData, thresh)
+* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+"""
 function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
 
     # Define the relevant sensit region assuming the same slices center between ref and image data
@@ -114,7 +143,6 @@ function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acq
 
 end
 
-# FUNCTION TO INTERPOLATE AND REMOVE OUTFLINE OF THE COIL SENSITIVITY MAP
 function Find_scaling_sensit(acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
 
     freq_enc_FoV = [acqMap.fov[1], acqData.fov[1]]
