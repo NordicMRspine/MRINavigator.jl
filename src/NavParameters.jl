@@ -1,5 +1,12 @@
 export defaultNavParams
 
+
+"""
+    params = defaultNavParams()
+
+Define defaul parameters for data loading, navigator correction and image reconstruction.
+The user must add the data paths.
+"""
 function defaultNavParams()
     params = Dict{Symbol,Any}()
     params[:slices] = nothing
