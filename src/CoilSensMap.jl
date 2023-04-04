@@ -4,7 +4,7 @@ export CompSensit, ResizeSensit!, CompRoughMask
 """
     sensit = CompSensit(acq::AcquisitionData, thresh = 0.135)
 
-Computes the coils sensitivity map. Masking tuned for spinal cord imaging.
+Compute the coils sensitivity maps with masking tuned for spinal cord imaging.
 Use MRICoilSensitivities.jl alternatively.
 
 # Arguments
@@ -39,7 +39,7 @@ end
 """
     mask = CompRoughMask(acq::AcquisitionData, slices::Int64, thresh)
 
-Return a rough mask. May not be homogeneous.
+Return a rough mask that may not be homogeneous.
 
 # Arguments
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
@@ -64,6 +64,7 @@ end
 
 function findConnectedComponent!(mask_slice::Array{T,2}) where {T}
 
+    # Find and keep only the biggest connected componet in the image
     components = label_components(mask_slice)
     measured_area = component_lengths(components)
     measured_area = measured_area[2:end] #remove background component
@@ -84,7 +85,7 @@ function removeBehindBack!(mask_slice::Array{T,2}) where{T}
     for ii = 1:lines
         dder[ii] = density[ii+1] - density[ii]
     end
-    # put to zero everything behind the patient back
+    # put to zero everything behind the subject back
     position = findmax(dder)[2] -3
     for jj=1:position
         mask_slice[:,jj].=0
@@ -106,12 +107,13 @@ end
 """
     sensit = ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData)
 
-Resize and resample the coil sensitivity map to match the acqusiition data filed of view and resolution.
+Resize and resample the coil sensitivity map to match the acquisition data field of view and resolution.
 This step is needed for the image reconstruction to run.
+Image data and reference data must have the same slice center.
 
 # Arguments
 * `sensit::Array{Complex{T},4}` - output of CompSensit(acq::AcquisitionData, thresh)
-* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `acqMap::RawAcquisitionData` - acquisition data structure obtained converting raw reference data with MRIReco.jl
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
 """
 function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
@@ -119,28 +121,33 @@ function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acq
     # Define the relevant sensit region assuming the same slices center between ref and image data
     (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
 
-    freq_enc_FoV_disc = Int64((freq_enc_FoV[1] - freq_enc_FoV[2]) / (freq_enc_FoV[1]/freq_enc_samples[1]) / 2)
-    phase_enc_FoV_disc = Int64((phase_enc_FoV[1] - phase_enc_FoV[2]) / (phase_enc_FoV[1]/phase_enc_samples[1]) / 2)
+    if freq_enc_samples[1] != size(sensit,1) && freq_enc_samples[2] != size(sensit,2)
+        @warn "The coils sensitivity maps have already been resized, the function cannot be executed."
+    elseif freq_enc_FoV[1] < freq_enc_FoV[2] || phase_enc_FoV[1] < phase_enc_FoV[2]
+        @error "The reference data field of view is smaller than the image data field of view."
+    else
+        freq_enc_FoV_disc = Int64((freq_enc_FoV[1] - freq_enc_FoV[2]) / (freq_enc_FoV[1]/freq_enc_samples[1]) / 2)
+        phase_enc_FoV_disc = Int64((phase_enc_FoV[1] - phase_enc_FoV[2]) / (phase_enc_FoV[1]/phase_enc_samples[1]) / 2)
 
-    # Remove the sensit data that are not included in the image data FoV
-    sensit = sensit[freq_enc_FoV_disc+1:end-freq_enc_FoV_disc, phase_enc_FoV_disc+1:end-phase_enc_FoV_disc, :, :]
-    
-    # Interpolate the sensit data to the image data
-    cartes_index = findall(x -> x!=0, sensit)
-    mask = zeros(Float32, size(sensit)) # compute the mask
-    for ii in cartes_index
-        mask[ii] = 1
-    end
-    # Linear interpolation
-    sensit = mapslices(x ->imresize(x, (freq_enc_samples[2], phase_enc_samples[2])), sensit, dims=[1,2])
-    mask = mapslices(x ->imresize(x, (freq_enc_samples[2], phase_enc_samples[2])), mask, dims=[1,2])
-    # Remove interpolated outline
-    cartes_index = findall(x -> x!=1, mask)
-    for ii in cartes_index
-        mask[ii] = 0
-    end
-    sensit = mask .* sensit
+        # Remove the sensit data that are not included in the image data FoV
+        sensit = sensit[freq_enc_FoV_disc+1:end-freq_enc_FoV_disc, phase_enc_FoV_disc+1:end-phase_enc_FoV_disc, :, :]
 
+        # Interpolate the sensit data to the image data
+        cartes_index = findall(x -> x!=0, sensit)
+        mask = zeros(Float32, size(sensit)) # compute the mask
+        for ii in cartes_index
+            mask[ii] = 1
+        end
+        # Linear interpolation
+        sensit = mapslices(x ->imresize(x, (freq_enc_samples[2], phase_enc_samples[2])), sensit, dims=[1,2])
+        mask = mapslices(x ->imresize(x, (freq_enc_samples[2], phase_enc_samples[2])), mask, dims=[1,2])
+        # Remove interpolated outline
+        cartes_index = findall(x -> x!=1, mask)
+        for ii in cartes_index
+            mask[ii] = 0
+        end
+        sensit = mask .* sensit
+    end
 end
 
 function Find_scaling_sensit(acqMap::AcquisitionData, acqData::AcquisitionData) where {T}

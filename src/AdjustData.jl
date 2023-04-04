@@ -18,14 +18,11 @@ function OrderSlices!(rawData::RawAcquisitionData)
     end
 
     unique!(slices)
+    slices_indx = sortperm(sortperm(slices))
 
-    if size(slices, 1) != 1
-        slices_indx = sortperm(sortperm(slices))
-
-        for ii = 1:total_num
-            index = rawData.profiles[ii].head.position[3] .== slices
-            rawData.profiles[ii].head.idx.slice = slices_indx[index][1]-1
-        end
+    for ii = 1:total_num
+        index = rawData.profiles[ii].head.position[3] .== slices
+        rawData.profiles[ii].head.idx.slice = slices_indx[index][1]-1
     end
 
 end
@@ -68,7 +65,7 @@ function ExtractNoiseData!(rawData::RawAcquisitionData)
     flags = ExtractFlags(rawData)
     total_num = length(rawData.profiles)
     if total_num != size(flags, 1)
-        error("size of flags and number of profiles in rawData do not match")
+        @error "size of flags and number of profiles in rawData do not match"
     end
     noisemat = Matrix{typeof(rawData.profiles[1].data)}
 
@@ -100,7 +97,7 @@ function ReverseBipolar!(rawData::RawAcquisitionData)
     flags = ExtractFlags(rawData)
     total_num = length(rawData.profiles)
     if total_num != size(flags, 1)
-        error("size of flags and number of profiles in rawData do not match")
+        @error "size of flags and number of profiles in rawData do not match"
     end
 
     for ii=1:total_num
