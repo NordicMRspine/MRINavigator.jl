@@ -1,22 +1,22 @@
-export ReconstructSaveMap, niftiSaveImg
+export ReconstructSaveMap, niftiSaveImg, callSCT
 
 
-# FUNCTION TO RECONSTRUCT AND SAVE THE COIL SENSITIVITY MAPS
+"""
+    ReconstructSaveMap(path_nifti::String, path_ref::String)
+
+Reconstruct the coil sensitivity map and save it in nifti format without spatial informations.
+
+# Arguments
+* `path_nifti::String` - path of the nifti file
+* `path_rep::String` - path of reference data in ISMRMRD format
+"""
 function ReconstructSaveMap(path_nifti::String, path_ref::String)
 
     (img, acq) = ReconstructMap(path_ref)
-    img = img.data[:, :, :]
     niftiSaveImg(img, path_nifti, acq)
 
 end
 
-
-"""
-        (img, acq) = econstruct_maps(path_ref::String)
-
-Reconstruct the sensitivity maps.
-Return the image data and acquisition data.
-"""
 function ReconstructMap(path_ref::String)
 
     raw = RawAcquisitionData(ISMRMRDFile(path_ref))
@@ -29,7 +29,17 @@ function ReconstructMap(path_ref::String)
 
 end
 
-#FUNCTION TO SAVE THE SENSITIVITY MAPS AS NIFTI FILES, FOR COMPATIBILITY WITH SCT
+
+"""
+    niftiSaveImg(img::AbstractArray{T}, acq::AcquisitionData, path_nifti::String)
+
+Save the module of the reconstruction output in nifti format, without spatial information.
+
+# Arguments
+* `img::AbstractArray{T}` - reconstruction output
+* `acq::AcquisitionData` - reconstruction input needed for saving the voxel dimension
+* `path_nifti::String` - path of the nifti file
+"""
 function niftiSaveImg(img::AbstractArray{T}, acq::AcquisitionData, path_nifti::String) where {T}
 
     voxel_tmp = fieldOfView(acq)[1:2]./encodingSize(acq)
@@ -46,3 +56,28 @@ function niftiSaveImg(img::AbstractArray{T}, acq::AcquisitionData, path_nifti::S
 
 end
 
+
+"""
+    callSCT(params::Dict{Symbol, Any})
+
+Call spinal cord toolbox and find spinal cord centerline.
+https://spinalcordtoolbox.com
+
+# Arguments
+* `params::Dict{Symbol, Any}` - paramerters dictionary
+"""
+function callSCT(params::Dict{Symbol, Any})
+
+    path_nifti = params[:path_niftiMap]
+    path_centerline = params[:path_centerline] * "centerline.nii"
+    run(`sct_get_centerline -i $path_nifti -c t2s -o $path_centerline`)
+    if params[:trust_SCT] == false
+        run(`fsleyes $path_nifti -cm greyscale $path_centerline -cm red`)
+        options = ["yes", "no"]
+        menu = RadioMenu(options)
+        choice = request("Is the result satisfying?", menu)
+        if choice == 2
+            run(`sct_get_centerline -i $path_nifti -c t2s -o $path_centerline -method viewer`)
+        end
+    end
+end

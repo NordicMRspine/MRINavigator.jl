@@ -1,4 +1,4 @@
-export CompSensit, ResizeSensit!, CompRoughMask
+export CompSensit, ResizeSensit, CompRoughMask
 
 
 """
@@ -116,12 +116,13 @@ Image data and reference data must have the same slice center.
 * `acqMap::RawAcquisitionData` - acquisition data structure obtained converting raw reference data with MRIReco.jl
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
 """
-function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
+function ResizeSensit(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
 
     # Define the relevant sensit region assuming the same slices center between ref and image data
     (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
+    sizeSensit = size(Sensit)
 
-    if freq_enc_samples[1] != size(sensit,1) && freq_enc_samples[2] != size(sensit,2)
+    if freq_enc_samples[1] != sizeSensit[1] && freq_enc_samples[2] != sizeSensit[2]
         @warn "The coils sensitivity maps have already been resized, the function cannot be executed."
     elseif freq_enc_FoV[1] < freq_enc_FoV[2] || phase_enc_FoV[1] < phase_enc_FoV[2]
         @error "The reference data field of view is smaller than the image data field of view."
@@ -134,7 +135,7 @@ function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acq
 
         # Interpolate the sensit data to the image data
         cartes_index = findall(x -> x!=0, sensit)
-        mask = zeros(Float32, size(sensit)) # compute the mask
+        mask = zeros(Float32, sizeSensit) # compute the mask
         for ii in cartes_index
             mask[ii] = 1
         end
@@ -149,6 +150,7 @@ function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acq
         sensit = mask .* sensit
     end
 end
+
 
 function Find_scaling_sensit(acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
 

@@ -185,3 +185,55 @@ function AdjustSubsampleIndices!(acqData::AcquisitionData)
     end
 
 end
+
+
+"""
+    (nav, nav_time) = ExtNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing})
+
+Extract the navigator profiles from the raw data structure.
+
+# Arguments
+* `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
+* `slices::Union{Vector{Int64}, Nothing}` - vector containing the numbers of the slices that were loaded with MRIReco.jl
+"""
+function ExtNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing})
+
+    total_num = length(rawData.profiles)
+    numberslices = 0
+    if isnothing(slices)
+        numberslices = rawd.params["enc_lim_slice"].maximum +1
+    else
+        numberslice = size(slices,1)
+    end
+    contrasts = zeros(Int64, total_num)
+    slices = zeros(Int64, total_num)
+    lines = zeros(Int64, total_num)
+    for ii = 1:total_num
+        contrasts[ii] = rawd.profiles[ii].head.idx.contrast
+        slices[ii] = rawd.profiles[ii].head.idx.slice
+        lines[ii] = rawd.profiles[ii].head.idx.kspace_encode_step_1
+    end
+    # keep only the indexes of data saved in the first echo (this includes navigator)
+    contrastsIndx = findall(x->x==0, contrasts)
+    slices = slices[contrastsIndx]
+    lines = lines[contrastsIndx]
+
+    nav = zeros(ComplexF32, size(rawd.profiles[1].data)[1], size(rawd.profiles[1].data)[2],
+        rawd.params["reconSize"][2], numberslice)
+
+    nav_time = zeros(ComplexF64,
+        rawd.params["reconSize"][2], numberslice)
+    #Odd indexes are data first echo, Even indexes are navigator data
+    for ii = 2:2:length(slices)
+        nav[:,:,lines[ii]+1,slices[ii]+1] = rawd.profiles[contrastsIndx[ii]].data
+        nav_time[lines[ii]+1,slices[ii]+1] = rawd.profiles[contrastsIndx[ii]].head.acquisition_time_stamp
+    end
+    #Remove the rows filled with zeroes
+    lines = unique(lines) .+1
+    nav = nav[:,:,lines,:]
+    nav_time = nav_time[:,:,lines,:]
+
+    return nav, nav_time
+    #navigator[k-space samples, coils, k-space lines, slices]
+
+end
