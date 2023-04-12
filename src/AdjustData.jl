@@ -1,4 +1,4 @@
-export OrderSlices!, ExtractNoiseData!, ReverseBipolar!, RemoveRef!, CopyTE!, AdjustSubsampleIndices!
+export OrderSlices!, ExtractNoiseData!, ReverseBipolar!, RemoveRef!, CopyTE!, AdjustSubsampleIndices!, ExtractNavigator
 
 """
     OrderSlices!(rawData::RawAcquisitionData)
@@ -188,20 +188,21 @@ end
 
 
 """
-    (nav, nav_time) = ExtNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing})
+    (nav, nav_time) = ExtractNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing})
 
 Extract the navigator profiles from the raw data structure.
+These are registered with the same indices as the image data for the first echo time.
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
 * `slices::Union{Vector{Int64}, Nothing}` - vector containing the numbers of the slices that were loaded with MRIReco.jl
 """
-function ExtNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing})
+function ExtractNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing})
 
     total_num = length(rawData.profiles)
     numberslices = 0
     if isnothing(slices)
-        numberslices = rawd.params["enc_lim_slice"].maximum +1
+        numberslices = rawData.params["enc_lim_slice"].maximum +1
     else
         numberslice = size(slices,1)
     end
@@ -209,29 +210,29 @@ function ExtNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, 
     slices = zeros(Int64, total_num)
     lines = zeros(Int64, total_num)
     for ii = 1:total_num
-        contrasts[ii] = rawd.profiles[ii].head.idx.contrast
-        slices[ii] = rawd.profiles[ii].head.idx.slice
-        lines[ii] = rawd.profiles[ii].head.idx.kspace_encode_step_1
+        contrasts[ii] = rawData.profiles[ii].head.idx.contrast
+        slices[ii] = rawData.profiles[ii].head.idx.slice
+        lines[ii] = rawData.profiles[ii].head.idx.kspace_encode_step_1
     end
     # keep only the indexes of data saved in the first echo (this includes navigator)
     contrastsIndx = findall(x->x==0, contrasts)
     slices = slices[contrastsIndx]
     lines = lines[contrastsIndx]
 
-    nav = zeros(ComplexF32, size(rawd.profiles[1].data)[1], size(rawd.profiles[1].data)[2],
-        rawd.params["reconSize"][2], numberslice)
+    nav = zeros(ComplexF32, size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2],
+        rawData.params["reconSize"][2], numberslice)
 
-    nav_time = zeros(ComplexF64,
-        rawd.params["reconSize"][2], numberslice)
+    nav_time = zeros(ComplexF32,
+        rawData.params["reconSize"][2], numberslice)
     #Odd indexes are data first echo, Even indexes are navigator data
     for ii = 2:2:length(slices)
-        nav[:,:,lines[ii]+1,slices[ii]+1] = rawd.profiles[contrastsIndx[ii]].data
-        nav_time[lines[ii]+1,slices[ii]+1] = rawd.profiles[contrastsIndx[ii]].head.acquisition_time_stamp
+        nav[:,:,lines[ii]+1,slices[ii]+1] = rawData.profiles[contrastsIndx[ii]].data
+        nav_time[lines[ii]+1,slices[ii]+1] = rawData.profiles[contrastsIndx[ii]].head.acquisition_time_stamp
     end
     #Remove the rows filled with zeroes
     lines = unique(lines) .+1
     nav = nav[:,:,lines,:]
-    nav_time = nav_time[:,:,lines,:]
+    nav_time = nav_time[lines,:]
 
     return nav, nav_time
     #navigator[k-space samples, coils, k-space lines, slices]

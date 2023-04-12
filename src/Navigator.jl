@@ -1,7 +1,7 @@
 export NavCorr!
 
 # FUNCTION TO APPLY THE NAVIGATOR CORRECTION WITH FFT
-function NavCorr!(params::Dict{Symbol, Any}, Data)
+function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalDataStruct) where{T}
 
     # Get the initial parameters
     #navigator[k-space samples, coils, k-space lines, slices]
