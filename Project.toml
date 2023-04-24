@@ -4,6 +4,8 @@ authors = ["Laura Beghini"]
 version = "0.1.0"
 
 [deps]
+DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
+DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
@@ -15,6 +17,7 @@ NIfTI = "a3a9e032-41b5-5fc4-967a-a6b7a19844d3"
 PolygonOps = "647866c9-e3ac-4575-94e7-e3d426903924"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 julia = "1.3"

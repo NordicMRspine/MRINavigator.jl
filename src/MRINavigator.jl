@@ -3,11 +3,14 @@ module MRINavigator
 using MRIReco
 using MRICoilSensitivities
 using MRIFiles
+using Statistics
 using Setfield
 using Images
 using PolygonOps
 using NIfTI
 using REPL.TerminalMenus
+using DataInterpolations
+using DSP
 
 include("AdjustData.jl")
 include("CoilSensMap.jl")

@@ -1,7 +1,6 @@
 export NavCorr!
 
-# FUNCTION TO APPLY THE NAVIGATOR CORRECTION WITH FFT
-function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalDataStruct) where{T}
+function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where{T}
     
     #navigator[k-space samples, coils, k-space lines, slices]
     # compute the navigator fourier transform in the readout direction
@@ -32,23 +31,25 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     nav = nav./exp.(im*phMean) # Recenter phase of time series
     nav = angle.(nav) # compute navigator phase
 
-    if corr_type == "FFT_narrow_wrap"
-        (wrapped_points, correlation) = find_wrapped(nav, nav_time, trace, slices, TR)
-        nav = wrap_corr(nav, wrapped_points, correlation, slices)
+    correlation = nothing
+    wrapped_points = nothing
+    if params[:corr_type] == "FFT_narrow_wrap"
+        (wrapped_points, correlation) = find_wrapped(nav, nav_time, trace, adddata.numslices, addData.TR)
+        nav = wrap_corr(nav, wrapped_points, correlation, addData.numslices)
     end
 
     nav_return = deepcopy(nav)
     
     # Correct for different TEs
-    nav = TE_corr(nav, acqd, dt_nav, TE_nav, samples, contrasts)
+    nav = TE_corr(nav, acqData, addData.dt_nav, addData.TE_nav, addData.numsamples, addData.numechoes)
     nav = exp.(im*nav)
     # Apply the correction to the data
-    apply_corr!(nav, acqd, contrasts, lines, samples, slices)
-    return nav_return, centerline
+    apply_corr!(nav, acqData, addData.numechoes,addData.numlines, addData.numsamples, addData.numslices)
+    return navOutput(nav_return, centerline, correlation, wrapped_points)
 
 end
 
-function comp_weights(navabs, noisestd, lines, slices)
+function comp_weights(navabs, noisestd, lines::Int64, slices::Int64)
 
     # weights[points, coils, lines, slices]
     coils = size(navabs, 2)
@@ -69,7 +70,7 @@ function comp_weights(navabs, noisestd, lines, slices)
 end
 
 
-function comp_centerline(addData)
+function comp_centerline(addData::additionalNavInput)
 
     freq_enc_ref_res = addData.freq_enc_FoV[1] / addData.freq_enc_samples[1]
     freq_enc_img_res = addData.freq_enc_FoV[2] / addData.freq_enc_samples[2]
@@ -84,13 +85,13 @@ function comp_centerline(addData)
 end
 
 # FUNCTION TO CORRECT FOR DIFFERENT TEs
-function TE_corr(nav, acqd, dt_nav, TE_nav, samples, contrasts)
+function TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
 
     nav = nav ./ TE_nav
-    nav = repeat(nav, outer=(samples,contrasts,1,1))
-    t_nav = ([1:samples;] .- (samples/2+1)) .* dt_nav
-    for  ii=1:contrasts
-        for ll=1:samples
+    nav = repeat(nav, outer=(numsamples,numechoes,1,1))
+    t_nav = ([1:numsamples;] .- (numsamples/2+1)) .* dt_nav
+    for ii=1:numechoes
+        for ll=1:numsamples
             nav[ll,ii,:,:] = nav[ll,ii,:,:] .* (acqd.traj[ii].TE .* 1e-3 + t_nav[ll])
         end
     end
@@ -98,14 +99,14 @@ function TE_corr(nav, acqd, dt_nav, TE_nav, samples, contrasts)
 
 end
 
-function apply_corr!(nav, acqd, contrasts, lines, samples, slices)
+function apply_corr!(nav::Array{T, 4}, acqd::AcquisitionData, numechoes::Int64, numlines::Int64, numsamples::Int64, numslices::Int64) where {T}
 
-    for ii = 1:contrasts
-        for jj = 1:lines
-            for ll = 1:samples
-                for mm = 1:slices
-                    acqd.kdata[ii,mm,1][(jj-1)*samples+ll,:] =
-                     acqd.kdata[ii,mm,1][(jj-1)*samples+ll,:] ./ nav[ll,ii,jj,mm]
+    for ii = 1:numechoes
+        for jj = 1:numlines
+            for ll = 1:numsamples
+                for mm = 1:numslices
+                    acqd.kdata[ii,mm,1][(jj-1)*numsamples+ll,:] =
+                     acqd.kdata[ii,mm,1][(jj-1)*numsamples+ll,:] ./ nav[ll,ii,jj,mm]
                 end
             end
         end
@@ -113,7 +114,7 @@ function apply_corr!(nav, acqd, contrasts, lines, samples, slices)
 
 end
 
-function remove_ref_ph!(nav, lines, index)
+function remove_ref_ph!(nav::Array{Complex{T}, 4}, lines::Int64, index::Int64) where {T}
 
     phRef = exp.(im*angle.(nav[:,:,index,:])) # compute reference phase
     for ii=1:lines

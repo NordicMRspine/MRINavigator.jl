@@ -1,12 +1,12 @@
-export additionalDataStruct
+export additionalNavInput
 
-mutable struct additionalDataStruct
+mutable struct additionalNavInput
     numslices::Int64
     numechoes::Int64
     numsamples::Int64
     numlines::Int64
     TR::Int64
-    TE_nav::Int64
+    TE_nav::Float64
     dt_nav::Float64
     freq_enc_FoV::Union{Array{Int64}, Nothing}
     freq_enc_samples::Union{Array{Int64}, Nothing}
@@ -17,7 +17,7 @@ mutable struct additionalDataStruct
 end
 
 """
-    Data = additionalDataStruct(
+    Data = additionalNavInput(
         noisemat::Array{Complex{Float32}, 2},
         rawData::RawAcquisitionData,
         acqData::AcquisitionData,
@@ -26,7 +26,7 @@ end
         trace::Union{Matrix{Float64}, Nothing} = nothing,
         centerline::Union{Vector{Float64}, Nothing} = nothing)
 
-Generate the additional data structure that is needed as imput to navCorr!
+Construct the additional data structure that is needed as imput to navCorr!
 
 # Arguments
 * `noisemat::Array{Complex{Float32}, 2}` - noise data obtained with ExtractNoiseData!
@@ -35,11 +35,11 @@ Generate the additional data structure that is needed as imput to navCorr!
 
 # Optional arguments with default value = nothing
 * `acqMap::Union{AcquisitionData, Nothing} = nothing` - acquisition data structure obtained converting reference data with MRIReco.jl
-* `nav_time::Union{Array{Complex{Float32}, 2}, Nothing}` - time stamps for the navigator data obtained with ExtractNavigator
-* `trace::Union{Matrix{Float64}, Nothing}` - respiratory trace time stamps and values in matrix with two colunms (1:time, 2:trace)
+* `nav_time::Union{Array{Complex{Float32}, 2}, Nothing}` - time stamps for the navigator data obtained with ExtractNavigator (in ms from the beginning of the day)
+* `trace::Union{Matrix{Float64}, Nothing}` - respiratory trace time stamps and values in matrix with two colunms (1:time [ms], 2:trace)
 * `centerline::Union{Vector{Float64}, Nothing}` - coordinates of the spinal cord ceterline obtained with callSCT
 """
-function additionalDataStruct(
+function additionalNavInput(
         noisemat::Array{Complex{Float32}, 2},
         rawData::RawAcquisitionData,
         acqData::AcquisitionData,
@@ -64,7 +64,14 @@ function additionalDataStruct(
     (freq_enc_FoV, freq_enc_samples) = Find_scaling_sensit(acqMap, acqData)
     end
 
-    return Data = (numslices, numechoes, numsamples, numlines, TR, TE_nav, dt_nav,
+    return additionalNavInput(numslices, numechoes, numsamples, numlines, TR, TE_nav, dt_nav,
                 freq_enc_FoV, freq_enc_samples, nav_time, noisemat, trace, centerline)
 
+end
+
+mutable struct navOutput
+    navigator::Array{Float64, 4}
+    centerline::Union{Vector{Float64}, Nothing}
+    correlation::Union{Vector{Int8}, Nothing}
+    wrapped_points::Union{Vector{Int8}, Nothing}
 end

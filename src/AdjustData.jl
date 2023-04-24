@@ -204,7 +204,7 @@ function ExtractNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int6
     if isnothing(slices)
         numberslices = rawData.params["enc_lim_slice"].maximum +1
     else
-        numberslice = size(slices,1)
+        numberslices = size(slices,1)
     end
     contrasts = zeros(Int64, total_num)
     slices = zeros(Int64, total_num)
@@ -220,10 +220,10 @@ function ExtractNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int6
     lines = lines[contrastsIndx]
 
     nav = zeros(ComplexF32, size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2],
-        rawData.params["reconSize"][2], numberslice)
+        rawData.params["reconSize"][2], numberslices)
 
     nav_time = zeros(ComplexF32,
-        rawData.params["reconSize"][2], numberslice)
+        rawData.params["reconSize"][2], numberslices)
     #Odd indexes are data first echo, Even indexes are navigator data
     for ii = 2:2:length(slices)
         nav[:,:,lines[ii]+1,slices[ii]+1] = rawData.profiles[contrastsIndx[ii]].data
