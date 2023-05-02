@@ -120,7 +120,7 @@ function ResizeSensit(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqD
 
     # Define the relevant sensit region assuming the same slices center between ref and image data
     (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
-    sizeSensit = size(Sensit)
+    sizeSensit = size(sensit)
 
     if freq_enc_samples[1] != sizeSensit[1] && freq_enc_samples[2] != sizeSensit[2]
         @warn "The coils sensitivity maps have already been resized, the function cannot be executed."

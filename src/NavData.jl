@@ -10,7 +10,7 @@ mutable struct additionalNavInput
     dt_nav::Float64
     freq_enc_FoV::Union{Array{Int64}, Nothing}
     freq_enc_samples::Union{Array{Int64}, Nothing}
-    nav_time::Union{Array{Complex{Float32}, 2}, Nothing}
+    nav_time::Union{Array{Float32, 2}, Nothing}
     noisemat::Array{Complex{Float32}, 2}
     trace::Union{Matrix{Float64}, Nothing}
     centerline::Union{Vector{Float64}, Nothing}

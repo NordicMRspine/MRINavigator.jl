@@ -222,7 +222,7 @@ function ExtractNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int6
     nav = zeros(ComplexF32, size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2],
         rawData.params["reconSize"][2], numberslices)
 
-    nav_time = zeros(ComplexF32,
+    nav_time = zeros(Float64,
         rawData.params["reconSize"][2], numberslices)
     #Odd indexes are data first echo, Even indexes are navigator data
     for ii = 2:2:length(slices)

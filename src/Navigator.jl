@@ -33,7 +33,7 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
 
     correlation = nothing
     wrapped_points = nothing
-    if params[:corr_type] == "FFT_narrow_wrap"
+    if params[:corr_type] == "FFT_wrap"
         (wrapped_points, correlation) = find_wrapped(nav, nav_time, trace, adddata.numslices, addData.TR)
         nav = wrap_corr(nav, wrapped_points, correlation, addData.numslices)
     end
@@ -84,7 +84,6 @@ function comp_centerline(addData::additionalNavInput)
 
 end
 
-# FUNCTION TO CORRECT FOR DIFFERENT TEs
 function TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
 
     nav = nav ./ TE_nav
