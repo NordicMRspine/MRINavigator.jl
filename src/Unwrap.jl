@@ -1,6 +1,6 @@
 
 
-function find_wrapped(nav::Array{Complex{T}, 4}, nav_time::Array{Float32, 2}, trace::Array{Float64, 1}, slices::Int64, TR::Int64) where {T}
+function find_wrapped(nav::Array{Float32,4}, nav_time::Array{Float32, 2}, trace::Array{Float64, 1}, slices::Int64, TR::Int64) where {T}
 
     time = trace[:,1]
     trace_data = trace[:,2] ./ findmax(trace[:,2])[1] .* pi/2
@@ -24,7 +24,7 @@ function find_wrapped(nav::Array{Complex{T}, 4}, nav_time::Array{Float32, 2}, tr
     corr_relevant = findall(>(max_corr - 1.5 * std_corr), abs.(correlation))
     size_corr_relevant = size(corr_relevant,1)
     # Invert navigator sign if the correlation is negative
-    invertNavSign!(nav, correlation, slices)
+    invertNavSign!(nav_norm, correlation, slices)
 
     # reshape the navigator signal from the slices with higher correlation in a vector and align with the trace
     nav_align = reshape(nav_norm[:,corr_relevant], (size_corr_relevant * size(nav_norm,1)))
@@ -34,6 +34,13 @@ function find_wrapped(nav::Array{Complex{T}, 4}, nav_time::Array{Float32, 2}, tr
     nav_time_align = nav_time_align[order]
     nav_align = interpolate(nav_align, nav_time_align, time, 0) # zero flag for no slices
     trace_time = align(nav_align, nav_time, trace_data, time, TR)
+
+    # Re-Invert navigator sign if the correlation is negative
+    invertNavSign!(nav_norm, correlation, slices)
+    # Compute correlation after alignemnt
+    correlation = signalCorrelation(nav_int, trace_data, time_lim)
+
+
 
 
 end

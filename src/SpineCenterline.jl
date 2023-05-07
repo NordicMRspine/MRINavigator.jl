@@ -13,7 +13,9 @@ Reconstruct the coil sensitivity map and save it in nifti format without spatial
 function ReconstructSaveMap(path_nifti::String, path_ref::String)
 
     (img, acq) = ReconstructMap(path_ref)
-    niftiSaveImg(img, path_nifti, acq)
+    start_voxel = div(acq.encodingSize[1] -  acq.encodingSize[2], 2)
+    img = img[start_voxel+1 : start_voxel+acq.encodingSize[2], :, :]
+    niftiSaveImg(img, acq, path_nifti)
 
 end
 

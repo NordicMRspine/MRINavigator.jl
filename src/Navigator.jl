@@ -1,21 +1,22 @@
-export NavCorr!
+export NavCorr!, comp_weights, comp_centerline, TE_corr, apply_corr!, remove_ref_ph!
 
 function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where{T}
     
     #navigator[k-space samples, coils, k-space lines, slices]
     # compute the navigator fourier transform in the readout direction
+    centerline = nothing
     if params[:corr_type] != "knav"
         nav = ifftshift(ifft(fftshift(nav, [1]), [1]), [1])
         #noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
-        center = div(addData.numsamples, 2) # change name, center is a function
+        nav_center = div(addData.numsamples, 2) # change name, center is a function
         if params[:use_SCT] == true
             centerline = comp_centerline(addData)
             for ii = 1:addData.numslices
-                nav[:,:,:,ii] = circshift(nav[:,:,:,ii], center-centerline[ii])
+                nav[:,:,:,ii] = circshift(nav[:,:,:,ii], nav_center-centerline[ii])
             end
         end
         buff = Int64(params[:FFT_interval] / acqData.fov[1] * addData.numsamples / 2)
-        nav = nav[center-buff+1:center+buff,:,:,:]
+        nav = nav[nav_center-buff+1:nav_center+buff,:,:,:]
     end
 
     remove_ref_ph!(nav, addData.numlines, 1) # remove the reference phase
@@ -26,17 +27,22 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     weights = comp_weights(navabs, noisestd, addData.numlines, addData.numslices)
     nav = sum(weights .* nav, dims=(1,2,)) # coils and lines average
 
+    cartes_index = findall(x -> isnan(x), nav) # remove this, ugly fix subject 01 rep 2
     phMean = nav./abs.(nav)
+    phMean[cartes_index] .= 0 # remove this, ugly fix subject 01 rep 2
     phMean = angle.(mean(phMean, dims=(3,))) # Compute mean phase
     nav = nav./exp.(im*phMean) # Recenter phase of time series
     nav = angle.(nav) # compute navigator phase
+    nav[cartes_index] .= 0 # remove this, ugly fix subject 01 rep 2
 
     correlation = nothing
     wrapped_points = nothing
+    #=
     if params[:corr_type] == "FFT_wrap"
         (wrapped_points, correlation) = find_wrapped(nav, nav_time, trace, adddata.numslices, addData.TR)
         nav = wrap_corr(nav, wrapped_points, correlation, addData.numslices)
     end
+    =#
 
     nav_return = deepcopy(nav)
     
@@ -75,7 +81,9 @@ function comp_centerline(addData::additionalNavInput)
     freq_enc_ref_res = addData.freq_enc_FoV[1] / addData.freq_enc_samples[1]
     freq_enc_img_res = addData.freq_enc_FoV[2] / addData.freq_enc_samples[2]
     freq_enc_FoV_disc = Int64((addData.freq_enc_FoV[1] - addData.freq_enc_FoV[2]) / freq_enc_ref_res / 2)
+    start_voxel = div(addData.freq_enc_samples[1] - addData.phase_enc_samples[1], 2)
     centerline = round.(addData.centerline)
+    centerline = centerline .+ start_voxel
     centerline = centerline .- freq_enc_FoV_disc
     centerline = centerline .* freq_enc_ref_res ./ freq_enc_img_res
     centerline = floor.(centerline)

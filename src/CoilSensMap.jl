@@ -135,7 +135,7 @@ function ResizeSensit(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqD
 
         # Interpolate the sensit data to the image data
         cartes_index = findall(x -> x!=0, sensit)
-        mask = zeros(Float32, sizeSensit) # compute the mask
+        mask = zeros(Float32, size(sensit)) # compute the mask
         for ii in cartes_index
             mask[ii] = 1
         end

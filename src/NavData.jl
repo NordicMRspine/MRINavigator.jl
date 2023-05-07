@@ -10,7 +10,7 @@ mutable struct additionalNavInput
     dt_nav::Float64
     freq_enc_FoV::Union{Array{Int64}, Nothing}
     freq_enc_samples::Union{Array{Int64}, Nothing}
-    nav_time::Union{Array{Float32, 2}, Nothing}
+    nav_time::Union{Array{Float64, 2}, Nothing}
     noisemat::Array{Complex{Float32}, 2}
     trace::Union{Matrix{Float64}, Nothing}
     centerline::Union{Vector{Float64}, Nothing}
@@ -44,13 +44,13 @@ function additionalNavInput(
         rawData::RawAcquisitionData,
         acqData::AcquisitionData,
         acqMap::Union{AcquisitionData, Nothing} = nothing,
-        nav_time::Union{Array{Complex{Float32}, 2}, Nothing} = nothing,
+        nav_time::Union{Array{Float64, 2}, Nothing} = nothing,
         trace::Union{Matrix{Float64}, Nothing} = nothing,
         centerline::Union{Vector{Float64}, Nothing} = nothing    
     ) where {T}
 
-    numslices = size(acqData.kdata)[2]
-    numechoes = size(acqData.kdata)[1]
+    numslices = numSlices(acqData)
+    numechoes = numContrasts(acqData)
     numsamples = acqData.encodingSize[1]
     numlines = convert(Int64, size(acqData.kdata[1],1)/numsamples)
     TR = rawData.params["TR"]
@@ -70,7 +70,7 @@ function additionalNavInput(
 end
 
 mutable struct navOutput
-    navigator::Array{Float64, 4}
+    navigator::Array{Float32, 4}
     centerline::Union{Vector{Float64}, Nothing}
     correlation::Union{Vector{Int8}, Nothing}
     wrapped_points::Union{Vector{Int8}, Nothing}
