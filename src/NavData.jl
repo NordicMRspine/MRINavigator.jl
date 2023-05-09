@@ -10,6 +10,7 @@ mutable struct additionalNavInput
     dt_nav::Float64
     freq_enc_FoV::Union{Array{Int64}, Nothing}
     freq_enc_samples::Union{Array{Int64}, Nothing}
+    phase_enc_samples::Union{Array{Int64}, Nothing}
     nav_time::Union{Array{Float64, 2}, Nothing}
     noisemat::Array{Complex{Float32}, 2}
     trace::Union{Matrix{Float64}, Nothing}
@@ -47,7 +48,7 @@ function additionalNavInput(
         nav_time::Union{Array{Float64, 2}, Nothing} = nothing,
         trace::Union{Matrix{Float64}, Nothing} = nothing,
         centerline::Union{Vector{Float64}, Nothing} = nothing    
-    ) where {T}
+    )
 
     numslices = numSlices(acqData)
     numechoes = numContrasts(acqData)
@@ -61,17 +62,17 @@ function additionalNavInput(
     dt_nav = convert(Float64, rawData.profiles[ii-1].head.sample_time_us) .* 1e-6
     TE_nav = rawData.profiles[ii].head.user_int[8] .* 1e-6 # get TE nav
     if !isnothing(acqMap) && !isnothing(acqData)
-    (freq_enc_FoV, freq_enc_samples) = Find_scaling_sensit(acqMap, acqData)
+    (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
     end
 
     return additionalNavInput(numslices, numechoes, numsamples, numlines, TR, TE_nav, dt_nav,
-                freq_enc_FoV, freq_enc_samples, nav_time, noisemat, trace, centerline)
+                freq_enc_FoV, freq_enc_samples, phase_enc_samples, nav_time, noisemat, trace, centerline)
 
 end
 
 mutable struct navOutput
-    navigator::Array{Float32, 4}
-    centerline::Union{Vector{Float64}, Nothing}
-    correlation::Union{Vector{Int8}, Nothing}
-    wrapped_points::Union{Vector{Int8}, Nothing}
+    navigator::Array{Float64, 4}
+    centerline::Union{Array{Float64, 1}, Nothing}
+    correlation::Union{Array{Float64, 1}, Nothing}
+    wrapped_points::Union{Array{Int8, 2}, Nothing}
 end

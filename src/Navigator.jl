@@ -37,12 +37,11 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
 
     correlation = nothing
     wrapped_points = nothing
-    #=
-    if params[:corr_type] == "FFT_wrap"
-        (wrapped_points, correlation) = find_wrapped(nav, nav_time, trace, adddata.numslices, addData.TR)
+    
+    if params[:corr_type] == "FFT_unwrap"
+        (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices, addData.TR)
         nav = wrap_corr(nav, wrapped_points, correlation, addData.numslices)
     end
-    =#
 
     nav_return = deepcopy(nav)
     
@@ -128,4 +127,16 @@ function remove_ref_ph!(nav::Array{Complex{T}, 4}, lines::Int64, index::Int64) w
         nav[:,:,ii,:] = nav[:,:,ii,:] ./ phRef # subctract reference phase
     end
 
+end
+
+
+function wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Array{Float64, 1}, slices::Int64)
+
+    invertNavSign!(nav, correlation, slices)
+    wrapped_points = reshape(wrapped_points, (1, 1, size(wrapped_points)...))
+    idx_pos = findall(x->x==1, wrapped_points)
+    nav[idx_pos] = nav[idx_pos] .+ (2*pi)
+    invertNavSign!(nav, correlation, slices)
+
+    return nav
 end
