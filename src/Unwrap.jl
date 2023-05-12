@@ -1,4 +1,5 @@
 
+
 function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Int64)
 
     time = trace[:,1]
@@ -21,30 +22,22 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     # Invert navigator sign if the correlation is negative
     invertNavSign!(nav_norm, correlation, slices)
 
-    # reshape the navigator signal from the slices with higher correlation in a vector and align with the trace
-    nav_align = reshape(nav_norm[:,corr_relevant], (size_corr_relevant * size(nav_norm,1)))
-    nav_time_align = reshape(nav_time[:,corr_relevant], (size_corr_relevant * size(nav_time,1)))
-    order = sortperm(nav_time_align)
-    nav_align = nav_align[order]
-    nav_time_align = nav_time_align[order]
-    nav_align = interpolate(nav_align, nav_time_align, time)
-    trace_time = align(nav_align, nav_time_align, trace_data, time, TR)
+   # reshape the navigator signal from the slices with higher correlation in a vector and align with the trace
+   nav_align = reshape(nav_norm[:,corr_relevant], (size_corr_relevant * size(nav_norm,1)))
+   nav_time_align = reshape(nav_time[:,corr_relevant], (size_corr_relevant * size(nav_time,1)))
+   order = sortperm(nav_time_align)
+   nav_align = nav_align[order]
+   nav_time_align = nav_time_align[order]
+   nav_align = smooth_trace(nav_time_align, nav_align)
+   nav_align = interpolate(nav_align, nav_time_align, time)
+   trace_time = align(nav_align, nav_time_align, trace_data, time, TR)
 
     # Invert navigator sign if the correlation is negative
     invertNavSign!(nav_norm, correlation, slices)
 
-    # find slices with possible wrapping
-    possible_wrap_slices = ones(Bool, slices)
-    for ii = 1:slices
-        max_interval = findmax(nav_norm[:,ii])[1] - findmin(nav_norm[:,ii])[1]
-        if max_interval < 4
-            possible_wrap_slices[ii] = false
-        end
-    end
-
-    nowrap_slices = findall(possible_wrap_slices .== false)
-    nav_norm[:, nowrap_slices] .= 1
-    trace_data_int[:, nowrap_slices] .= 0.1
+    # Interpolate the trace values to the navigator time points for each slice
+    time_relevant = findall(x -> (x>(findmin(abs.(nav_time_align))[1]) && x< (findmax(abs.(nav_time_align))[1])), trace_time)
+    trace_data_int = interpolate(trace_data[time_relevant], trace_time[time_relevant], nav_time, slices)
 
     # Compute correlation after alignemnt
     correlation = signalCorrelation(nav_norm, trace_data_int, slices)
@@ -53,14 +46,34 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     for ii = 1:slices-1
         if corr_sign[ii] != corr_sign[ii+1]
             field_change = field_change +1
-            if field_change > 1
-                correlation[ii+1] = (-1) *correlation[ii+1]
+            if field_change == 2
+                correlation[ii+1:end] = abs.(correlation[ii+1:end]) .* corr_sign[ii]
             end
         end
     end
 
     # Invert navigator sign if the correlation is negative
     invertNavSign!(nav_norm, correlation, slices)
+
+    # find slices with possible wrapping
+    possible_wrap_slices = ones(Bool, slices)
+    for ii = 1:slices
+        deviation = std(nav_norm[:,ii])
+        meanval = mean(nav_norm[:,ii])
+        remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, nav_norm[:,ii])
+        max_interval = findmax(nav_norm[remove_extreme,ii])[1] - findmin(nav_norm[remove_extreme,ii])[1]
+        if max_interval < 0.9
+            possible_wrap_slices[ii] = false
+        end
+    end
+
+    if mean(correlation) < 0.2
+        possible_wrap_slices .== false
+    end
+
+    nowrap_slices = findall(possible_wrap_slices .== false)
+    nav_norm[:, nowrap_slices] .= 1
+    trace_data_int[:, nowrap_slices] .= 0.1
 
     # renormalize trace and nav data
     for ii = 1:slices
@@ -96,11 +109,15 @@ function smooth_nav(nav_time::Array{Float64, 2}, nav_norm::Array{Float64, 2}, sl
 
     sampling_freq = size(nav_time, 1) * size(nav_time,2) / (findmax(abs.(nav_time))[1] - findmin(abs.(nav_time))[1]) *1000
     filter = digitalfilter(Lowpass(0.25, fs = sampling_freq), Butterworth(3))
-    nav_filt = zeros(Float64, size(nav_norm))
+    padd_size = div(size(nav_norm, 1),4)
+    nav_padd = zeros(Float64, padd_size, slices)
+    nav_filt = cat(nav_padd, nav_norm, nav_padd, dims=1)
     for ii = 1:slices
-        nav_filt[:,ii] = filtfilt(filter, nav_norm[:,ii])
+        nav_filt[:,ii] = filtfilt(filter, nav_filt[:,ii])
     end
+    nav_filt = nav_filt[padd_size+1:end-padd_size,:]
     return nav_filt
+
 end
 
 
@@ -160,35 +177,37 @@ end
 #FUNCTION TO ALIGN THE TRACE AND NAVIGATOR DATA
 function align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Int64)
 
-    # align the two recordings
-    TR = round(Int, TR)
-    tmp = 1e10
-    shift = 0
     time_relevant = findall(x -> (x>(findmin(abs.(nav_time_align))[1]) && x< (findmax(abs.(nav_time_align))[1])), time)
-    for ii = -TR:1:TR
-        resid_mean = mean(abs.(nav_align[time_relevant] .- trace_data[time_relevant.+ii]))
-        if resid_mean < tmp
-            tmp=resid_mean
-            shift = ii
-        end
+    delay = alignsignals(trace_data[time_relevant], nav_align[time_relevant])[2]
+    trace_time = time
+    if delay < TR/2
+        print(delay)
+        trace_time = circshift(time, delay)
     end
-
-    #print(string(shift, " ")) #test to check the time shift
-    trace_time = time .- shift
 
     return trace_time
 
 end
 
-function find_baseline(nav_norm::Array{Float64, 2}, trace_data_inter::Array{Float64, 2}, slices::Int64)
+
+function find_baseline(nav_norm::Array{Float64, 2}, trace_data_int::Array{Float64, 2}, slices::Int64)
 
     nav_baseline = zeros(Float64, slices)
 
     for ii = 1:slices
-        line = (findmax(trace_data_inter[:,ii])[1] - findmin(trace_data_inter[:,ii])[1]) .*0.3 + findmin(trace_data_inter[:,ii])[1]
-        relevant = findall(x -> x< line, trace_data_inter[:,ii])
-        nav_norm_base = nav_norm[relevant,ii]
-        nav_baseline[ii] = mean(nav_norm_base)
+        deviation = std(trace_data_int[:,ii])
+        if deviation == 0
+            deviation = 1
+        end
+        meanval = mean(trace_data_int[:,ii])
+        remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, trace_data_int[:,ii])
+        trace_remove_extreme = trace_data_int[remove_extreme, ii]
+        nav_remove_extreme = nav_norm[remove_extreme,ii]
+        max = findmax(trace_remove_extreme)[1]
+        min = findmin(trace_remove_extreme)[1]
+        line = (max - min) .* 0.2 + min
+        relevant = findall(x -> x< line, trace_remove_extreme)
+        nav_baseline[ii] = mean(nav_remove_extreme[relevant])
     end
     
     return nav_baseline
@@ -196,16 +215,19 @@ function find_baseline(nav_norm::Array{Float64, 2}, trace_data_inter::Array{Floa
 end
 
 
+
 #FUNCTION TO FIND THE WRAPPED POINTS
 function find_wrapped_points(nav_norm::Array{Float64, 2}, trace_data_int::Array{Float64, 2}, trace_data_red::Array{Float64, 1})
 
+    deviation = std(trace_data_red)
+    meanval = mean(trace_data_red)
+    remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, trace_data_red)
     wrapped_points = zeros(Int8, size(nav_norm))
-    wrap_min = findmax(trace_data_red)[1] - ((findmax(trace_data_red)[1] - findmin(trace_data_red)[1]) .*0.65)
+    wrap_min = findmax(trace_data_red[remove_extreme])[1] - ((findmax(trace_data_red[remove_extreme])[1] - findmin(trace_data_red[remove_extreme])[1]) .*0.3)
     idx_pos = findall(x -> x >= wrap_min, trace_data_int)
-    nav_add2pi = findall(x->x<-0.3, nav_norm[idx_pos])
+    nav_add2pi = findall(x->x< -0.22, nav_norm[idx_pos])
     wrapped_points[idx_pos[nav_add2pi]] .= 1
 
     return wrapped_points
 
 end
-
