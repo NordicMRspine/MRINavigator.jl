@@ -15,7 +15,7 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
                 nav[:,:,:,ii] = circshift(nav[:,:,:,ii], nav_center-centerline[ii])
             end
         end
-        buff = Int64(params[:FFT_interval] / acqData.fov[1] * addData.numsamples / 2)
+        buff = round(Int64, params[:FFT_interval] / acqData.fov[1] * addData.numsamples / 2)
         nav = nav[nav_center-buff+1:nav_center+buff,:,:,:]
     end
 

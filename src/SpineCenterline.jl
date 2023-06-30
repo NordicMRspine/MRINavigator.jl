@@ -1,4 +1,4 @@
-export ReconstructSaveMap, niftiSaveImg, callSCT
+export ReconstructSaveMap, ReconstructMap, niftiSaveImg, callSCT
 
 
 """

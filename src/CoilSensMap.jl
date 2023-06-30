@@ -127,8 +127,8 @@ function ResizeSensit(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqD
     elseif freq_enc_FoV[1] < freq_enc_FoV[2] || phase_enc_FoV[1] < phase_enc_FoV[2]
         @error "The reference data field of view is smaller than the image data field of view."
     else
-        freq_enc_FoV_disc = Int64((freq_enc_FoV[1] - freq_enc_FoV[2]) / (freq_enc_FoV[1]/freq_enc_samples[1]) / 2)
-        phase_enc_FoV_disc = Int64((phase_enc_FoV[1] - phase_enc_FoV[2]) / (phase_enc_FoV[1]/phase_enc_samples[1]) / 2)
+        freq_enc_FoV_disc = round(Int64, (freq_enc_FoV[1] - freq_enc_FoV[2]) / (freq_enc_FoV[1]/freq_enc_samples[1]) / 2)
+        phase_enc_FoV_disc = round(Int64, (phase_enc_FoV[1] - phase_enc_FoV[2]) / (phase_enc_FoV[1]/phase_enc_samples[1]) / 2)
 
         # Remove the sensit data that are not included in the image data FoV
         sensit = sensit[freq_enc_FoV_disc+1:end-freq_enc_FoV_disc, phase_enc_FoV_disc+1:end-phase_enc_FoV_disc, :, :]
