@@ -4,11 +4,14 @@ export ReconstructSaveMap, ReconstructMap, niftiSaveImg, callSCT
 """
     ReconstructSaveMap(path_nifti::String, path_ref::String)
 
-Reconstruct the coil sensitivity map and save it in nifti format without spatial informations.
+Reconstruct the coil sensitivity map using the MRIReco.jl function and save it in nifti format without spatial informations.
 
 # Arguments
-* `path_nifti::String` - path of the nifti file
+* `path_nifti::String` - path of the nifti file. The file must have .nii extension
 * `path_rep::String` - path of reference data in ISMRMRD format
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+ISMRMRD reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.26089
 """
 function ReconstructSaveMap(path_nifti::String, path_ref::String)
 
@@ -19,6 +22,18 @@ function ReconstructSaveMap(path_nifti::String, path_ref::String)
 
 end
 
+
+"""
+    ReconstructMap(path_ref::String)
+
+Reconstruct the coil sensitivity map using the MRIReco.jl function.
+
+# Arguments
+* `path_rep::String` - path of reference data in ISMRMRD format
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+ISMRMRD reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.26089
+"""
 function ReconstructMap(path_ref::String)
 
     raw = RawAcquisitionData(ISMRMRDFile(path_ref))
@@ -39,8 +54,10 @@ Save the module of the reconstruction output in nifti format, without spatial in
 
 # Arguments
 * `img::AbstractArray{T}` - reconstruction output
-* `acq::AcquisitionData` - reconstruction input needed for saving the voxel dimension
-* `path_nifti::String` - path of the nifti file
+* `acq::AcquisitionData` - reconstruction input (MRIReco.jl) needed for saving the voxel dimension
+* `path_nifti::String` - path of the nifti file. The file must have .nii extension
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
 function niftiSaveImg(img::AbstractArray{T}, acq::AcquisitionData, path_nifti::String) where {T}
 
@@ -63,10 +80,12 @@ end
     callSCT(params::Dict{Symbol, Any})
 
 Call spinal cord toolbox and find spinal cord centerline.
-https://spinalcordtoolbox.com
+If trust_SCT = false in the parameters dictionary the user interaction is required in the Julia REPL
 
 # Arguments
 * `params::Dict{Symbol, Any}` - paramerters dictionary
+
+SCT reference: https://spinalcordtoolbox.com
 """
 function callSCT(params::Dict{Symbol, Any})
 

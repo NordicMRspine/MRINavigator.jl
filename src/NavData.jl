@@ -39,6 +39,8 @@ Construct the additional data structure that is needed as imput to navCorr!
 * `nav_time::Union{Array{Complex{Float32}, 2}, Nothing}` - time stamps for the navigator data obtained with ExtractNavigator (in ms from the beginning of the day)
 * `trace::Union{Matrix{Float64}, Nothing}` - respiratory trace time stamps and values in matrix with two colunms (1:time [ms], 2:trace)
 * `centerline::Union{Vector{Float64}, Nothing}` - coordinates of the spinal cord ceterline obtained with callSCT
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
 function additionalNavInput(
         noisemat::Array{Complex{Float32}, 2},
