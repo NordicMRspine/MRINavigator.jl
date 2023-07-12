@@ -27,13 +27,12 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     weights = comp_weights(navabs, noisestd, addData.numlines, addData.numslices)
     nav = sum(weights .* nav, dims=(1,2,)) # coils and lines average
 
-    cartes_index = findall(x -> isnan(x), nav) # remove this, ugly fix subject 01 rep 2
+    cartes_index = findall(x -> isnan(x), nav)
+    nav[cartes_index] .= eps()
     phMean = nav./abs.(nav)
-    phMean[cartes_index] .= 0 # remove this, ugly fix subject 01 rep 2
     phMean = angle.(mean(phMean, dims=(3,))) # Compute mean phase
     nav = nav./exp.(im*phMean) # Recenter phase of time series
     nav = angle.(nav) # compute navigator phase
-    nav[cartes_index] .= 0 # remove this, ugly fix subject 01 rep 2
 
     correlation = nothing
     wrapped_points = nothing
@@ -130,7 +129,7 @@ function remove_ref_ph!(nav::Array{Complex{T}, 4}, lines::Int64, index::Int64) w
 end
 
 
-function wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Array{Float64, 1}, slices::Int64)
+function wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
     invertNavSign!(nav, correlation, slices)
     wrapped_points = reshape(wrapped_points, (1, 1, size(wrapped_points)...))

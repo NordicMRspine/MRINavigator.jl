@@ -1,4 +1,4 @@
-export additionalNavInput
+export additionalNavInput, navOutput
 
 mutable struct additionalNavInput
     numslices::Int64
@@ -66,13 +66,13 @@ function additionalNavInput(
     end
 
     return additionalNavInput(numslices, numechoes, numsamples, numlines, TR, TE_nav, dt_nav,
-                freq_enc_FoV, freq_enc_samples, phase_enc_samples, nav_time, noisemat, trace, centerline)
+                freq_enc_FoV, freq_enc_samples, phase_enc_samples, nav_time, noisemat, trace, centerline) 
 
 end
 
 mutable struct navOutput
     navigator::Array{Float64, 4}
     centerline::Union{Array{Float64, 1}, Nothing}
-    correlation::Union{Array{Float64, 1}, Nothing}
+    correlation::Union{Array{Float64, 1}, Matrix{Float64}, Nothing}
     wrapped_points::Union{Array{Int8, 2}, Nothing}
 end

@@ -9,7 +9,7 @@ Define defaul parameters for data loading, navigator correction and image recons
 # Additional required parameters are
 
 
-#Additional not required parameters are
+# Additional not required parameters are
 """
 function defaultNavParams()
     params = Dict{Symbol,Any}()

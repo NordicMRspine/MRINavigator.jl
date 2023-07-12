@@ -1,9 +1,13 @@
-export OrderSlices!, ExtractNoiseData!, ReverseBipolar!, RemoveRef!, CopyTE!, AdjustSubsampleIndices!, ExtractNavigator
+export OrderSlices!, ExtractNoiseData!, ReverseBipolar!, RemoveRef!, CopyTE!, AdjustSubsampleIndices!, ExtractNavigator, ExtractFlags
 
 """
     OrderSlices!(rawData::RawAcquisitionData)
 
-Spatially order the slices in the raw data structure.
+Spatially order the slices in the MRIReco.jl raw data structure.
+The slices are ordered basing on the position coordinates saved in each profile.
+If these are not present the slices can not be ordered.
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
@@ -31,8 +35,10 @@ end
 """
     flags = ExtractFlags(rawData::RawAcquisitionData) 
 
-Extract the acquisition flags from raw data profiles.
+Extract the acquisition flags from the MRIReco.jl raw data profiles.
 Return a 31 elements vector for each profile.
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
@@ -54,8 +60,11 @@ end
 """
     noisemat = ExtractNoiseData!(rawData::RawAcquisitionData, flags::Array{Int64})
 
-Extract and return the noise acquisition from the raw data.
-The noise acquisition is one of the profiles with slice = 0, contrast = 0, repetition = 0.
+Extract and return the noise acquisition from the MRIReco.jl raw data.
+The noise acquisition is usually the first profile with slice = 0, contrast = 0, repetition = 0.
+The noise profile should have the 19th flag element qual to 1. Check with ExtractFlags if errors occur.
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
@@ -87,7 +96,9 @@ end
 """
     ReverseBipolar!(rawData::RawAcquisitionData)
 
-Reflect the raw data profiles for bipolar acquisition.
+Reflect the MRIReco.jl raw data profiles for bipolar acquisition.
+    
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
@@ -115,8 +126,10 @@ end
 """
     RemoveRef!(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing}, echoes::Union{Vector{Int64}, Nothing})
 
-Remove reference data that are acquired with the phase stabilization on Siemens scanners.
+Remove reference data that are not useful for the navigator-based crrection from acquisitions with phase stabilization on Siemens scanners.
 Not solid to recalls.
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
@@ -152,7 +165,9 @@ end
 """
     CopyTE!(rawData::RawAcquisitionData, acqData::AcquisitionData)
 
-Copy the TE values from the raw data structor to the acquisition data structor.
+Copy the TE values from the MRIReco.jl raw data structure to the acquisition data structure.
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
@@ -170,8 +185,10 @@ end
 """
     AdjustSubsampleIndices!(acqData::AcquisitionData)
 
-Add subsamples indices in the acquisition data structure.
-Needed when conveting data not acquired at the first repetition.
+Add subsamples indices in the MRIReco.jl acquisition data structure.
+Needed when conveting data not acquired in the first repetition.
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
@@ -190,8 +207,11 @@ end
 """
     (nav, nav_time) = ExtractNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing})
 
-Extract the navigator profiles from the raw data structure.
-These are registered with the same indices as the image data for the first echo time.
+Extract the navigator profiles from the MRIReco.jl raw data structure.
+These are registered with the same indices (contract, slice, encoding step) as the image data for the first echo time.
+Return a navigator array and a navigator time array. The navigator array has four dimensions in order: k-space samples, coils, k-space lines, slices.
+    
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
