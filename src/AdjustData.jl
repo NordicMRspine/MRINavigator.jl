@@ -171,7 +171,7 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
-* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `acqData::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
 """
 function CopyTE!(rawData::RawAcquisitionData, acqData::AcquisitionData)
 
@@ -191,7 +191,7 @@ Needed when conveting data not acquired in the first repetition.
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
-* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `acqData::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
 """
 function AdjustSubsampleIndices!(acqData::AcquisitionData)
 

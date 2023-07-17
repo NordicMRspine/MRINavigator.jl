@@ -32,7 +32,7 @@ Construct the additional data structure that is needed as imput to navCorr!
 # Arguments
 * `noisemat::Array{Complex{Float32}, 2}` - noise data obtained with ExtractNoiseData!
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
-* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `acqData::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
 
 # Optional arguments with default value = nothing
 * `acqMap::Union{AcquisitionData, Nothing} = nothing` - acquisition data structure obtained converting reference data with MRIReco.jl

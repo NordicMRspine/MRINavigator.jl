@@ -1,14 +1,32 @@
-export NavCorr!, comp_weights, comp_centerline, TE_corr, apply_corr!, remove_ref_ph!
+export NavCorr!
+
+"""
+    navOutput = NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where {T}
+
+Compute the navigator-based correction and apply it to the acquisition data. Multiple pipelines are available: "knav", "FFT" and "FFT_unwrap".
+Return navigator trace, spinal cord centerline in the reconstructed image coordinates, 
+correlation between nagigator and belt data for each slice and position of wrapped points for each slices.
+Please choose the pipeline using the corr_type filed in the params dictionary.
+
+# Arguments
+* `nav::Array{Complex{T}, 4}` - navigator profiles obtained with the ExtractNavigator function
+* `acqData::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `params::Dict{Symbol, Any}` - navigator correction paramerters dictionary
+* `addData::additionalNavInput` - mandatory additional data structure obtained with the constructor: additionalNavInput
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+
+"""
 
 function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where{T}
     
     #navigator[k-space samples, coils, k-space lines, slices]
-    # compute the navigator fourier transform in the readout direction
+    # compute the navigator fourier transform in the readout direction, only for FFT case
     centerline = nothing
     if params[:corr_type] != "knav"
         nav = ifftshift(ifft(fftshift(nav, [1]), [1]), [1])
         #noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
-        nav_center = div(addData.numsamples, 2) # change name, center is a function
+        nav_center = div(addData.numsamples, 2)
         if params[:use_SCT] == true
             centerline = comp_centerline(addData)
             for ii = 1:addData.numslices
@@ -16,21 +34,21 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
             end
         end
         buff = round(Int64, params[:FFT_interval] / acqData.fov[1] * addData.numsamples / 2)
+        # neglect points outside the interval of interest
         nav = nav[nav_center-buff+1:nav_center+buff,:,:,:]
     end
 
     remove_ref_ph!(nav, addData.numlines, 1) # remove the reference phase
-    navabs = abs.(nav)
     noisestd = std(addData.noisemat, dims=[1]).^2
 
     # Compute weights for the coils average
-    weights = comp_weights(navabs, noisestd, addData.numlines, addData.numslices)
-    nav = sum(weights .* nav, dims=(1,2,)) # coils and lines average
+    weights = comp_weights(abs.(nav), noisestd, addData.numlines, addData.numslices)
+    nav = sum(weights .* nav, dims=(1,2,)) # coils and samples average for each line
 
     cartes_index = findall(x -> isnan(x), nav)
     nav[cartes_index] .= eps()
     phMean = nav./abs.(nav)
-    phMean = angle.(mean(phMean, dims=(3,))) # Compute mean phase
+    phMean = angle.(mean(phMean, dims=(3,))) # Compute mean phase over the lines
     nav = nav./exp.(im*phMean) # Recenter phase of time series
     nav = angle.(nav) # compute navigator phase
 
@@ -53,7 +71,19 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
 
 end
 
-function comp_weights(navabs, noisestd, lines::Int64, slices::Int64)
+
+"""
+    weights = comp_weights(navabs::Array{T, 4}, noisestd::Matrix{T}, lines::Int64, slices::Int64) where {T}
+
+Compute and return the weights for coils and sample average for each slice. These should be used to extract one value for each navigator profile.
+
+# Arguments
+* `navabs::Array{T, 4}` - module of the navigator data
+* `noisestd::Matrix{T}` - standard deviation of the noise acquisition for each coil
+* `lines::Int64` - number of lines or data profiles
+* `slices::Int64` - number of slices
+"""
+function comp_weights(navabs::Array{T, 4}, noisestd::Matrix{T}, lines::Int64, slices::Int64) where {T}
 
     # weights[points, coils, lines, slices]
     coils = size(navabs, 2)
@@ -73,7 +103,14 @@ function comp_weights(navabs, noisestd, lines::Int64, slices::Int64)
 
 end
 
+"""
+    centerline = comp_centerline(addData::additionalNavInput)
 
+Convert and return centerline position from the reference data cordinate to the acquisition data coordinates (number of voxels).
+
+# Arguments
+* `addData::additionalNavInput` - mandatory additional data structure obtained with the constructor: additionalNavInput
+"""
 function comp_centerline(addData::additionalNavInput)
 
     freq_enc_ref_res = addData.freq_enc_FoV[1] / addData.freq_enc_samples[1]
@@ -90,6 +127,22 @@ function comp_centerline(addData::additionalNavInput)
 
 end
 
+"""
+    nav = TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
+
+Compute the phase value for the navigator correction basing on the exact acquisition time of each data sample in the line and for each echo.
+Return a four dimensional navigator array.
+
+# Arguments
+* `nav::Array{T, 4}` - phase estimates obtained from the navigator data
+* `acqData::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `dt_nav::Float64` - time interval between two samples in the frequency encoding direction
+* `TE_nav::Float64` - echo time of the navigator readout
+* `numsamples::Int64` - number of samples for each profile
+* `numechoes::Int64` - number of echoes
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+"""
 function TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
 
     nav = nav ./ TE_nav
@@ -104,6 +157,22 @@ function TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_na
 
 end
 
+"""
+    apply_corr!(nav::Array{T, 4}, acqd::AcquisitionData, numechoes::Int64, numlines::Int64, numsamples::Int64, numslices::Int64) where {T}
+
+Apply the navigator-based correction to the acquisition data structure obtained loading the raw data with MRIReco.jl.
+After applying the correction the image should be reconstructed. Use the reconstruct function.
+
+# Arguments
+* `nav::Array{T, 4}` - phase estimates obtained from the navigator data
+* `acqd::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `numechoes::Int64` - number of echoes
+* `numlines::Int64` - number of lines (profiles) for each slice and echo
+* `numsamples::Int64` - number of samples for each profile
+* `numslices::Int64` - number of slices
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+"""
 function apply_corr!(nav::Array{T, 4}, acqd::AcquisitionData, numechoes::Int64, numlines::Int64, numsamples::Int64, numslices::Int64) where {T}
 
     for ii = 1:numechoes
@@ -119,16 +188,38 @@ function apply_corr!(nav::Array{T, 4}, acqd::AcquisitionData, numechoes::Int64, 
 
 end
 
+"""
+    remove_ref_ph!(nav::Array{Complex{T}, 4}, lines::Int64, index::Int64) where {T}
+
+Subtract the phase of a navigator profile to all the other profiles in the slice. The input index defines which is the reference profile.
+
+# Arguments
+* `nav::Array{Complex{T}, 4}` - navigator profiles
+* `lines::Int64` - lines or profiles number
+* `index::Int64` - index of the reference profile to be subtracted
+
+"""
 function remove_ref_ph!(nav::Array{Complex{T}, 4}, lines::Int64, index::Int64) where {T}
 
     phRef = exp.(im*angle.(nav[:,:,index,:])) # compute reference phase
-    for ii=1:lines
+    for ii = 1:lines
         nav[:,:,ii,:] = nav[:,:,ii,:] ./ phRef # subctract reference phase
     end
 
 end
 
+"""
+    wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
+Unwrap the wrapped points identified with the find_wrapped funtion. These functions can be used only if physiological recording is available.
+
+# Arguments
+* `nav::Array{T, 4}` - phase estimates obtained from the navigator data
+* `wrapped_points::Array{Int8, 2}` - position of the wrapped points, output of find_wrapped
+* `correlation::Union{Array{Float64, 1}` - correlation values between the physiological recording the navigator estimates for each slice. Output of find_wrapped
+* `slices::Int64` - number of slices
+
+"""
 function wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
     invertNavSign!(nav, correlation, slices)
