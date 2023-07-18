@@ -5,7 +5,7 @@ export NavCorr!
 
 Compute the navigator-based correction and apply it to the acquisition data. Multiple pipelines are available: "knav", "FFT" and "FFT_unwrap".
 Return navigator trace, spinal cord centerline in the reconstructed image coordinates, 
-correlation between nagigator and belt data for each slice and position of wrapped points for each slices.
+Correlation between nagigator and belt data for each slice and position of wrapped points for each slices.
 Please choose the pipeline using the corr_type filed in the params dictionary.
 
 # Arguments

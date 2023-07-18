@@ -1,3 +1,16 @@
+"""
+    find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Int64)
+
+Identify the position of the wrapped points in the navigator phase estimates. The respiratory belt recording is necessary.
+Return the position of the wrapped points and the correlation between each navigator slice and the trace data.
+
+# Arguments
+* `nav::Array{Float64, 4}` - navigator phase estimates
+* `nav_time::Array{Float64, 2}` - navigator data time stamps in seconds from the beginning of the day, for each slice
+* `trace::Array{Float64, 2}` - physiological trace recording. Two columns vector. The first column contains the time stamps in seconds from the beginning of the day
+* `slices::Int64` - number of slices
+* `TR::Int64` - acqusition repetition time (TR)
+"""
 function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Int64)
 
     time = trace[:,1]
@@ -10,14 +23,14 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     trace_data_int = interpolate(trace_data, time, nav_time, slices)
     correlation = signalCorrelation(nav_norm, trace_data_int, slices, true)
 
+    # Invert navigator sign if the correlation is negative
+    invertNavSign!(nav_norm, correlation, slices)
+
     # Find navigator slices with higher correlationt to the trace
     max_corr = findmax(abs.(correlation))[1]
     std_corr = std(abs.(correlation))
     corr_relevant = findall(>(max_corr - 1.5*std_corr), abs.(correlation))
     size_corr_relevant = size(corr_relevant,1)
-
-    # Invert navigator sign if the correlation is negative
-    invertNavSign!(nav_norm, correlation, slices)
 
     # reshape in one vector the navigator signal from the slices with higher correlation, and align with the trace
     nav_align = reshape(nav_norm[:,corr_relevant], (size_corr_relevant * size(nav_norm,1)))
@@ -25,7 +38,7 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     order = sortperm(nav_time_align)
     nav_align = nav_align[order]
     nav_time_align = nav_time_align[order]
-    nav_align = smooth_trace(nav_time_align, nav_align)
+    nav_align = smooth_trace(nav_time_align, nav_align) # smooth the signal after combining multiple slices
     nav_align = interpolate(nav_align, nav_time_align, time)
     trace_time = align(nav_align, nav_time_align, trace_data, time, TR)
 
@@ -39,57 +52,9 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     # Compute correlation after alignemnt
     correlation = signalCorrelation(nav_norm, trace_data_int, slices, true)
 
-    # how many filed changes?
-    filter = digitalfilter(Lowpass(0.07, fs = 1), Butterworth(3))
-    padd_size = size(correlation, 1)
-    corr_padd = zeros(Float64, padd_size)
-    corr_filt = cat(corr_padd .= correlation[1], correlation, corr_padd .= correlation[end], dims=1)
-    corr_filt = filtfilt(filter, corr_filt)
-    corr_filt = corr_filt[padd_size+1:end-padd_size,:]
-    sign_corr_filt = sign.(corr_filt)
-    field_change = 0
-    for ii = 1:slices-1
-        if sign_corr_filt[ii] != sign_corr_filt[ii+1]
-            field_change = field_change +1
-        end
-    end
-
-    corr_sign = sign.(correlation)
-
-    if field_change == 0 || field_change == 2
-        sign_corr = sign(mean(corr_sign))
-        correlation = abs.(correlation) .* sign_corr
-    elseif field_change == 1
-        index_field_change = findlast(sign_corr_filt .== sign_corr_filt[1])[1]
-        index_vector = collect(index_field_change - 2 : index_field_change + 2)
-        filter!(x-> x != -1 && x != -2 && x != slices +1 && x != slices +2, index_vector)
-        mean_val = 10
-        index_smooth = 0
-        index_corr = 0
-        for ii in index_vector
-            deviation = std(nav_norm[:,ii])
-            meanval = mean(nav_norm[:,ii])
-            remove_extreme = findall(x -> meanval - 0.8*deviation < x < meanval + 0.8*deviation, nav_norm[:,ii])
-            mean_tmp = abs(mean(nav_norm[remove_extreme,ii]))
-            if mean_tmp < mean_val
-                mean_val = mean_tmp
-                print(meanval)
-                index_smooth = ii
-            end
-        end
-        tmp = 0
-        for ii in index_vector[1:end-1]
-            if corr_sign[ii] != corr_sign[ii+1]
-                if tmp == 0
-                    index_corr = ii
-                    tmp = 1
-                end
-            end
-        end
-        sign_corr_filt[1:index_corr] .= sign_corr_filt[1]
-        sign_corr_filt[index_corr+1:end] .= sign_corr_filt[slices]
-        correlation = abs.(correlation) .* sign_corr_filt
-    end
+    # allow for only one sign change in the correlation across slices
+    # adjust the correlation sign consequently
+    correlation = find_field_changes(correlation, slices)
 
     # Invert navigator sign if the correlation is negative
     invertNavSign!(nav_norm, correlation, slices)
@@ -106,7 +71,7 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
         end
     end
 
-    if mean(correlation) < 0.2
+    if mean(correlation) < 0.2 # consider the trace inaccurate
         possible_wrap_slices .== false
     end
 
@@ -114,9 +79,8 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     nav_norm[:, nowrap_slices] .= 1
     trace_data_int[:, nowrap_slices] .= 1
 
-    # renormalize trace and nav data
+    # renormalize nav data
     for ii = 1:slices
-        trace_data_int[:,ii] = trace_data_int[:,ii] ./ findmax(trace_data_int[:,ii], dims =1)[1]
         nav_norm[:,ii] = nav_norm[:,ii] ./ findmax(nav_norm[:,ii], dims =1)[1]
     end
 
@@ -128,14 +92,22 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
         nav_norm[:,ii] = nav_norm[:,ii] .- nav_baseline[ii]
     end
 
-    time_relevant = findall(x -> (x>(findmin(abs.(nav_time_align))[1]) && x< (findmax(abs.(nav_time_align))[1])), trace_time)
-    wrapped_points = find_wrapped_points(nav_norm, trace_data_int, trace_data[time_relevant])
+    wrapped_points = find_wrapped_points(nav_norm, trace_data_int, slices)
 
     # return position wrapped points and field shift direction
     return wrapped_points, correlation
 
 end
 
+"""
+    trace_data = smooth_trace(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
+
+Smooth the physiological trace recording using a butterworth low-pass filter (cut-off frequency 0.7Hz, 3 poles)
+
+# Arguments
+* `time::Array{Float64, 1}` - time in seconds from the beginning of the day for the belt recording
+* `trace_data::Array{Float64, 1}` - belt recording
+"""
 function smooth_trace(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
 
     sampling_freq = size(time,1)/(time[end]-time[1])*1000
@@ -144,10 +116,20 @@ function smooth_trace(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
 
 end
 
-function smooth_nav(nav_time::Array{Float64, 2}, nav_norm::Array{Float64, 2}, slices:: Int64)
+"""
+    nav_norm = smooth_nav(nav_time::Array{Float64, 2}, nav_norm::Array{Float64, 2}, slices:: Int64)
+
+Remove the low frequencies components from the navigatior phase estimate using a butterworth high-pass filter (cut-off frequency 0.5Hz, 3 poles)
+
+# Arguments
+* `nav_time::Array{Float64, 2}` - navigator data time stamps in seconds from the beginning of the day, for each slice
+* `nav_norm::Array{Float64, 1}` - navigator phase estimates
+* `slices::Int64` - number of slices
+"""
+function smooth_nav(nav_time::Array{Float64, 2}, nav_norm::Array{Float64, 2}, slices::Int64)
 
     sampling_freq = size(nav_time, 1) * size(nav_time,2) / (findmax(abs.(nav_time))[1] - findmin(abs.(nav_time))[1]) *1000
-    filter = digitalfilter(Highpass(0.5, fs = sampling_freq), Butterworth(3))
+    filter = digitalfilter(Highpass(0.15, fs = sampling_freq), Butterworth(5))
     padd_size = div(size(nav_norm, 1),4)
     nav_padd = zeros(Float64, padd_size, slices)
     nav_filt = cat(nav_padd, nav_norm, nav_padd, dims=1)
@@ -159,7 +141,20 @@ function smooth_nav(nav_time::Array{Float64, 2}, nav_norm::Array{Float64, 2}, sl
 
 end
 
+"""
+    inter_vector = interpolate(nav_norm::Union{Matrix{Float64}, Vector{Float64}},
+                   nav_time::Union{Matrix{Float64}, Vector{Float64}},
+                   time::Union{Matrix{Float64}, Vector{Float64}}, slices = 0)
 
+Interpolate the first input vector with time stamps specified in the second input to the time points specified in the third input.
+Return the interpolartion result.
+
+# Arguments
+* `nav_norm::Union{Matrix{Float64}, Vector{Float64}}` - vector or matrix to be interpolated
+* `nav_time::Union{Matrix{Float64}, Vector{Float64}}` - time points of the original data
+* `time::Union{Matrix{Float64}, Vector{Float64}}` - desired time points
+* `slices::Int64` - number of slices
+"""
 function interpolate(nav_norm::Union{Matrix{Float64}, Vector{Float64}},
                     nav_time::Union{Matrix{Float64}, Vector{Float64}},
                     time::Union{Matrix{Float64}, Vector{Float64}}, slices = 0)
@@ -185,7 +180,20 @@ function interpolate(nav_norm::Union{Matrix{Float64}, Vector{Float64}},
     return nav_int
 end
 
-function signalCorrelation(nav_int::Array{Float64, 2}, trace_data::Array{Float64, 2}, slices::Int64, allData::Bool)
+"""
+    corr = signalCorrelation(nav_int::Array{Float64, 2}, trace_data::Array{Float64, 2}, slices::Int64, allData = true)
+
+Return the correlation between the respiratory belt recording and the navigator field variations estimates.
+The vector must be interpolated to the same time points before calling this function.
+Return correlation = 0.1 if data is Nan.
+
+# Arguments
+* `nav_int::Array{Float64, 2}` - navigator phase estimes
+* `trace_data::Array{Float64, 2}` - physiological trace recording from the respiratory belt
+* `slices::Int64` - number of slices
+* `allData::Bool` - use all the time points if true. Use only the lower time points in the belt trace if false, hopefully escluding wrapped points in the navigator
+"""
+function signalCorrelation(nav_int::Array{Float64, 2}, trace_data::Array{Float64, 2}, slices::Int64, allData = true)
 
     corr = ones(Float64, slices)
     for ii = 1:slices
@@ -205,6 +213,17 @@ function signalCorrelation(nav_int::Array{Float64, 2}, trace_data::Array{Float64
     return corr
 end
 
+
+"""
+    invertNavSign!(nav::Union{Array{Float64, 2}, Array{Float64, 4}}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
+
+Invert the navigator phase estimates sign if the correlation between the respiratory trace and the navigator esimates is negative.
+
+# Arguments
+* `nav::Array{Float64, 2}` - navigator phase estimes
+* `correlation::Union{Array{Float64, 1}, Matrix{Float64}}` - correlation vector between each navigator slice and the respiratory belt recording
+* `slices::Int64` - number of slices
+"""
 function invertNavSign!(nav::Union{Array{Float64, 2}, Array{Float64, 4}}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
     corr_sign = sign.(correlation)
@@ -220,7 +239,21 @@ function invertNavSign!(nav::Union{Array{Float64, 2}, Array{Float64, 4}}, correl
     end
 end
 
-#FUNCTION TO ALIGN THE TRACE AND NAVIGATOR DATA
+
+"""
+    trace_time = align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Int64)
+
+Align the signal in the first imput (time stamps in the second imput) to the signal in the third imput (time stamps in the fourth input). acquisition TR in the last input.
+Use the finddelay function from DSP.jl, find the peak of the signals cross-correlation.
+Return the new time vector for the signal in the third input.
+
+# Arguments
+* `nav_align::Array{Float64, 2}` - navigator phase estimes reshaped in one vector
+* `nav_time_align::Array{Float64, 1}` - time stamps for the navigator phase estimates in seconds from the beginning of the day
+* `trace_data::Array{Float64, 1}` - respiratory belt recording  in seconds from the beginning of the day
+* `time::Array{Float64, 1}` - time stamps for the respiratory belt recording in se
+* `TR::Int64` - acquisition repetition time
+"""
 function align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Int64)
 
     time_relevant = findall(x -> (x>(findmin(abs.(nav_time_align))[1]) && x< (findmax(abs.(nav_time_align))[1])), time)
@@ -236,6 +269,74 @@ function align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, 
 end
 
 
+"""
+    correlation = find_field_changes(correlation::Union{Array{Float64, 1}, Matrix{Float64}})
+
+Inhale air can lead to both positive and negative field variations depensing by the vertebral level.
+There are two regions where the field variations change sign, at the lungs extremities.
+It is reasonable to assume that MRI using a commercial spinal coil can not allow to record both these regions in the same acquisition.
+Therefore, only one field change in the correlation sign acorss sloces should be allowed.
+
+# Arguments
+* `correlation::Union{Array{Float64, 1}, Matrix{Float64}}` - correlation vector between each navigator slice and the respiratory belt recording
+* `slices::Int64` - number of slices
+"""
+function find_field_changes(correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
+
+    # allow for only one change in the sign on the correlation values across slices
+    filter = digitalfilter(Lowpass(0.07, fs = 1), Butterworth(3))
+    padd_size = size(correlation, 1)
+    corr_padd = zeros(Float64, padd_size)
+    corr_filt = cat(corr_padd .= correlation[1], correlation, corr_padd .= correlation[end], dims=1)
+    corr_filt = filtfilt(filter, corr_filt)
+    corr_filt = corr_filt[padd_size+1:end-padd_size,:]
+    sign_corr_filt = sign.(corr_filt)
+    field_change = 0
+    for ii = 1:slices-1
+        if sign_corr_filt[ii] != sign_corr_filt[ii+1]
+            field_change = field_change +1
+        end
+    end
+
+    corr_sign = sign.(correlation)
+
+    if field_change == 0 || field_change == 2
+        sign_corr = sign(mean(corr_sign))
+        correlation = abs.(correlation) .* sign_corr
+    elseif field_change == 1
+        index_field_change = findlast(sign_corr_filt .== sign_corr_filt[1])[1]
+        index_vector = collect(index_field_change - 2 : index_field_change + 2)
+        filter!(x-> x != -1 && x != -2 && x != slices +1 && x != slices +2, index_vector)
+        index_corr = 0
+        tmp = 0
+        for ii in index_vector[1:end-1]
+            if corr_sign[ii] != corr_sign[ii+1]
+                if tmp == 0
+                    index_corr = ii
+                    tmp = 1
+                end
+            end
+        end
+        sign_corr_filt[1:index_corr] .= sign_corr_filt[1]
+        sign_corr_filt[index_corr+1:end] .= sign_corr_filt[slices]
+        correlation = abs.(correlation) .* sign_corr_filt
+    end
+
+    return correlation
+
+end
+
+
+"""
+    nav_baseline = find_baseline(nav_norm::Array{Float64, 2}, trace_data_int::Array{Float64, 2}, slices::Int64)
+
+Find navigator baseline corresponding to the end of the exhalation. Return the baseline coordinate.
+
+# Arguments
+* `nav_norm::Array{Float64, 2}` - navigator phase estimes
+* `trace_data_int::Array{Float64, 2}` - trace data smoothed, aligned and interpolated to the navigator time points for each slice.
+* `slices::Int64` - number of slices
+"""
 function find_baseline(nav_norm::Array{Float64, 2}, trace_data_int::Array{Float64, 2}, slices::Int64)
 
     nav_baseline = zeros(Float64, slices)
@@ -261,19 +362,32 @@ function find_baseline(nav_norm::Array{Float64, 2}, trace_data_int::Array{Float6
 end
 
 
+"""
+    wrapped_points = find_wrapped_points(nav_norm::Array{Float64, 2}, trace_data_int::Array{Float64, 2}, slices::Int64)
 
-#FUNCTION TO FIND THE WRAPPED POINTS
-function find_wrapped_points(nav_norm::Array{Float64, 2}, trace_data_int::Array{Float64, 2}, trace_data_red::Array{Float64, 1})
+Find wrapped points comparing the breathing related oscillations measured with the respiratory belt and the navigator readout.
+Return a binary array, with the same size as nav_norm and 1 if the point is idenfied as wrapped.
 
-    deviation = std(trace_data_red)
-    meanval = mean(trace_data_red)
-    remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, trace_data_red)
+# Arguments
+* `nav_norm::Array{Float64, 2}` - navigator phase estimes
+* `trace_data_int::Array{Float64, 2}` - trace data smoothed, and interpolated to the navigator time points for each slice
+* `slices::Int64` - number of slices
+"""
+function find_wrapped_points(nav_norm::Array{Float64, 2}, trace_data_int::Array{Float64, 2}, slices::Int64)
+
     wrapped_points = zeros(Int8, size(nav_norm))
-    wrap_min = findmax(trace_data_red[remove_extreme])[1] - ((findmax(trace_data_red[remove_extreme])[1] - findmin(trace_data_red[remove_extreme])[1]) .*0.3)
-    idx_pos = findall(x -> x >= wrap_min, trace_data_int)
-    nav_add2pi = findall(x->x< -0.22, nav_norm[idx_pos])
-    wrapped_points[idx_pos[nav_add2pi]] .= 1
-
+    for ii = 1:slices
+        deviation = std(trace_data_int[:,ii])
+        if deviation == 0
+            deviation = 1
+        end
+        meanval = mean(trace_data_int[:,ii])
+        remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, trace_data_int[:,ii])
+        wrap_min = findmax(trace_data_int[remove_extreme,ii])[1] - ((findmax(trace_data_int[remove_extreme,ii])[1] - findmin(trace_data_int[remove_extreme,ii])[1]) .*0.25)
+        idx_pos = findall(x -> x >= wrap_min, trace_data_int[:,ii])
+        nav_add2pi = findall(x->x< -0.15, nav_norm[idx_pos,ii])
+        wrapped_points[idx_pos[nav_add2pi],ii] .= 1
+    end
     return wrapped_points
 
 end
