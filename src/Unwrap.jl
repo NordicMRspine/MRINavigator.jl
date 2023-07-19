@@ -383,9 +383,9 @@ function find_wrapped_points(nav_norm::Array{Float64, 2}, trace_data_int::Array{
         end
         meanval = mean(trace_data_int[:,ii])
         remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, trace_data_int[:,ii])
-        wrap_min = findmax(trace_data_int[remove_extreme,ii])[1] - ((findmax(trace_data_int[remove_extreme,ii])[1] - findmin(trace_data_int[remove_extreme,ii])[1]) .*0.25)
+        wrap_min = findmax(trace_data_int[remove_extreme,ii])[1] - ((findmax(trace_data_int[remove_extreme,ii])[1] - findmin(trace_data_int[remove_extreme,ii])[1]) .*0.28)
         idx_pos = findall(x -> x >= wrap_min, trace_data_int[:,ii])
-        nav_add2pi = findall(x->x< -0.15, nav_norm[idx_pos,ii])
+        nav_add2pi = findall(x->x< -0.2, nav_norm[idx_pos,ii])
         wrapped_points[idx_pos[nav_add2pi],ii] .= 1
     end
     return wrapped_points
