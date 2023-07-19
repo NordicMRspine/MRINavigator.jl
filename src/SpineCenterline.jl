@@ -24,7 +24,7 @@ end
 
 
 """
-    ReconstructMap(path_ref::String)
+  ReconstructMap(path_ref::String)
 
 Reconstruct the coil sensitivity map using the MRIReco.jl function.
 
