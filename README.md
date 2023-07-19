@@ -12,7 +12,7 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 ## How to give credit
 
-soon to be poublished
+soon to be published
 
 
 ## Community Standards
