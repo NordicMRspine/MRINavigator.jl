@@ -1,4 +1,4 @@
-export OrderSlices!, ExtractNoiseData!, ReverseBipolar!, RemoveRef!, CopyTE!, AdjustSubsampleIndices!, ExtractNavigator, ExtractFlags
+export OrderSlices!, ExtractNoiseData!, ReverseBipolar!, RemoveRef!, CopyTE!, AdjustSubsampleIndices!, ExtractNavigator, ExtractFlags, selectEcho!, selectSlice!
 
 """
     OrderSlices!(rawData::RawAcquisitionData)
@@ -133,27 +133,11 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
-* `slices::Union{Vector{Int64}, Nothing}` - vector containing the numbers of slices to be loaded with MRIReco.jl. Nothing loads all.
-* `echoes::Union{Vector{Int64}, Nothing}` - vector containing the numbers of echoes to be loaded with MRIReco.jl. Nothing loads all.
 """
-function RemoveRef!(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing}, echoes::Union{Vector{Int64}, Nothing})
+function RemoveRef!(rawData::RawAcquisitionData)
 
-    numSlices = 0
-    numEchoes = 0
-    if slices === nothing
-        numSlices = rawData.params["enc_lim_slice"].maximum+1
-    else
-        numSlices = size(slices, 1)
-    end
-    if echoes !== nothing
-        if 0 in echoes
-            numEchoes = size(echoes, 1) +1 # the navigator is saved as echo zero
-        else
-            numEchoes = size(echoes, 1)
-        end
-    else
-        numEchoes = size(rawData.params["TE"],1)+1
-    end
+    numSlices = rawData.params["enc_lim_slice"].maximum + 1
+    numEchoes = size(rawData.params["TE"],1) + 1
 
     #Apply this only if using phase stabilizaion
     removeIndx = numSlices*(numEchoes)
@@ -215,17 +199,11 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
-* `slices::Union{Vector{Int64}, Nothing}` - vector containing the numbers of the slices that were loaded with MRIReco.jl
 """
-function ExtractNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing})
+function ExtractNavigator(rawData::RawAcquisitionData)
 
     total_num = length(rawData.profiles)
-    numberslices = 0
-    if isnothing(slices)
-        numberslices = rawData.params["enc_lim_slice"].maximum +1
-    else
-        numberslices = size(slices,1)
-    end
+    numberslices = rawData.params["enc_lim_slice"].maximum +1
     contrasts = zeros(Int64, total_num)
     slices = zeros(Int64, total_num)
     lines = zeros(Int64, total_num)
@@ -256,5 +234,57 @@ function ExtractNavigator(rawData::RawAcquisitionData, slices::Union{Vector{Int6
 
     return nav, nav_time
     #navigator[k-space samples, coils, k-space lines, slices]
+
+end
+
+"""
+    SelectEcho!(acqd, idx_echo)
+
+Extract one or more echoes from the acquisition data structure
+
+# Arguments
+* `acqd::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `idx_echo::Vector{Int64}` - vector containing the indexes of the echoes to be selected (starting from 0)
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+"""
+function selectEcho!(acqd::AcquisitionData, idx_echo::Vector{Int64})
+
+    if !isempty(idx_echo)
+        contrasts = size(acqd.kdata)[1]
+        indices = Vector{Int64}(undef, contrasts)
+        for ii=1:contrasts
+            indices[ii] = ii
+        end
+        deleteat!(indices, idx_echo)
+        deleteat!(acqd.subsampleIndices, indices)
+        deleteat!(acqd.traj, indices)
+        acqd.kdata = acqd.kdata[idx_echo,:,:];
+    end
+
+end
+
+"""
+    SelectSlice!(acqd, nav, nav_time, idx_slice)
+
+Extract one or more echoes from the acquisition data structure
+
+# Arguments
+* `acqd::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `idx_slice::Vector{Int64}` - vector containing the indexes of the slices to be selected (starting from 0, downer slice)
+
+# Optional arguments with default value = nothing
+* `nav::Union{Array{Complex{T}, 4}, Nothin} = nothing` - navigator profiles obtained with the ExtractNavigator function
+* `nav_time::Union{Array{Complex{Float32}, 2}, Nothing}` - time stamps for the navigator data obtained with ExtractNavigator (in ms from the beginning of the day)
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+"""
+function selectSlice!(acqd::AcquisitionData, idx_slice::Vector{Int64}, nav::Union{Array{Complex{T}, 4}, Nothing} = nothing, nav_time::Union{Array{Float64, 2}, Nothing} = nothing) where {T}
+
+    acqd.kdata = acqd.kdata[:,idx_slice,:]
+    if !isnothing(nav) && !isnothing(nav_time)
+        nav = nav[:,:,:,idx_slice]
+        nav_time = nav_time[:,idx_slice]
+    end
 
 end

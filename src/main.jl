@@ -10,7 +10,7 @@ function loadData(params::Dict{Symbol, Any})
             rawData = @set rawData.profiles[ii].head.idx.repetition = 0
         end
     end
-    
+
     OrderSlices!(rawData)
         if params[:rep] == 0
             noisemat = ExtractNoiseData!(rawData)
@@ -32,4 +32,8 @@ function loadData(params::Dict{Symbol, Any})
 
 
 end
+
+
+
+COPY THE USAGE EXAMPLE HERE AND DIVIDE IT IN FUNCTIONS
 =#

@@ -6,8 +6,8 @@ Return the position of the wrapped points and the correlation between each navig
 
 # Arguments
 * `nav::Array{Float64, 4}` - navigator phase estimates
-* `nav_time::Array{Float64, 2}` - navigator data time stamps in seconds from the beginning of the day, for each slice
-* `trace::Array{Float64, 2}` - physiological trace recording. Two columns vector. The first column contains the time stamps in seconds from the beginning of the day
+* `nav_time::Array{Float64, 2}` - navigator data time stamps in ms from the beginning of the day, for each slice
+* `trace::Array{Float64, 2}` - physiological trace recording. Two columns vector. The first column contains the time stamps in ms from the beginning of the day
 * `slices::Int64` - number of slices
 * `TR::Int64` - acqusition repetition time (TR)
 """
@@ -105,7 +105,7 @@ end
 Smooth the physiological trace recording using a butterworth low-pass filter (cut-off frequency 0.7Hz, 3 poles)
 
 # Arguments
-* `time::Array{Float64, 1}` - time in seconds from the beginning of the day for the belt recording
+* `time::Array{Float64, 1}` - time in ms from the beginning of the day for the belt recording
 * `trace_data::Array{Float64, 1}` - belt recording
 """
 function smooth_trace(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
@@ -122,7 +122,7 @@ end
 Remove the low frequencies components from the navigatior phase estimate using a butterworth high-pass filter (cut-off frequency 0.5Hz, 3 poles)
 
 # Arguments
-* `nav_time::Array{Float64, 2}` - navigator data time stamps in seconds from the beginning of the day, for each slice
+* `nav_time::Array{Float64, 2}` - navigator data time stamps in ms from the beginning of the day, for each slice
 * `nav_norm::Array{Float64, 1}` - navigator phase estimates
 * `slices::Int64` - number of slices
 """
@@ -249,8 +249,8 @@ Return the new time vector for the signal in the third input.
 
 # Arguments
 * `nav_align::Array{Float64, 2}` - navigator phase estimes reshaped in one vector
-* `nav_time_align::Array{Float64, 1}` - time stamps for the navigator phase estimates in seconds from the beginning of the day
-* `trace_data::Array{Float64, 1}` - respiratory belt recording  in seconds from the beginning of the day
+* `nav_time_align::Array{Float64, 1}` - time stamps for the navigator phase estimates in ms from the beginning of the day
+* `trace_data::Array{Float64, 1}` - respiratory belt recording  in ms from the beginning of the day
 * `time::Array{Float64, 1}` - time stamps for the respiratory belt recording in se
 * `TR::Int64` - acquisition repetition time
 """
