@@ -288,7 +288,15 @@ function find_field_changes(correlation::Union{Array{Float64, 1}, Matrix{Float64
     padd_size = size(correlation, 1)
     corr_padd = zeros(Float64, padd_size)
     corr_filt = cat(corr_padd .= correlation[1], correlation, corr_padd .= correlation[end], dims=1)
-    corr_filt = filtfilt(filter, corr_filt)
+
+    try
+        corr_filt = filtfilt(filter, corr_filt)
+    catch e
+        if isa(e,BoundsError)
+            println("Please choose more slices, not enough to check field change across slices")
+        end
+    end
+
     corr_filt = corr_filt[padd_size+1:end-padd_size,:]
     sign_corr_filt = sign.(corr_filt)
     field_change = 0

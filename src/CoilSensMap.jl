@@ -196,7 +196,7 @@ Image data and reference data must have the same slice center.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function Find_scaling_sensit(acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
+function Find_scaling_sensit(acqMap::AcquisitionData{T}, acqData::AcquisitionData{T}) where {T}
 
     freq_enc_FoV = [acqMap.fov[1], acqData.fov[1]]
     freq_enc_samples = [acqMap.encodingSize[1], acqData.encodingSize[1]]
