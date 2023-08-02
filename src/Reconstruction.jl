@@ -27,12 +27,15 @@ function Reconstruct(acqd::AcquisitionData,
     params[:reconSize] = (acqd.encodingSize[1],acqd.encodingSize[2])
     params[:estimateProfileCenter] = true
     params[:senseMaps] = sensit
+
     if !isnothing(noisemat)
         params[:noiseData] = noisemat
     end
+
     # Do reconstruction
     img = reconstruction(acqd, params)
     img = dropdims(img, dims = tuple(findall(size(img) .== 1)...))
+    
     return img
 end
 
