@@ -110,6 +110,7 @@ function removeBehindBack!(mask_slice::Array{T,2}) where{T}
 
     # put to zero everything behind the subject back
     position = findmax(dder)[2] -3
+
     for jj=1:position
         mask_slice[:,jj].=0
     end
@@ -188,6 +189,7 @@ function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acq
         end
 
         sensit = mask .* sensit
+        
     end
 end
 
