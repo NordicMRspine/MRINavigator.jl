@@ -35,6 +35,7 @@ SCT reference: https://spinalcordtoolbox.com
 
 """
 function defaultNavParams()
+
     params = Dict{Symbol,Any}()
     params[:slices] = nothing
     params[:echoes] = nothing
@@ -45,8 +46,7 @@ function defaultNavParams()
     params[:trust_SCT] = false
     params[:use_SCT] = false
     params[:corr_type] = "FFT"
-    params[:FFT_interval] = 35 # millimiters
-
+    params[:FFT_interval] = 35 # [millimiters]
   
     return params
   end

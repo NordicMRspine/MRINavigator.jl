@@ -18,6 +18,7 @@ function ReconstructSaveMap(path_nifti::String, path_ref::String)
     (img, acq) = ReconstructMap(path_ref)
     start_voxel = div(acq.encodingSize[1] -  acq.encodingSize[2], 2)
     img = img[start_voxel+1 : start_voxel+acq.encodingSize[2], :, :]
+    
     niftiSaveImg(img, acq, path_nifti)
 
 end
@@ -38,6 +39,7 @@ function ReconstructMap(path_ref::String)
 
     raw = RawAcquisitionData(ISMRMRDFile(path_ref))
     OrderSlices!(raw)
+
     acq = AcquisitionData(raw, estimateProfileCenter=true)
     sensit = CompSensit(acq)
     img = Reconstruct(acq, sensit)
@@ -71,6 +73,7 @@ function niftiSaveImg(img::AbstractArray{T}, acq::AcquisitionData, path_nifti::S
 
     ni = NIVolume(abs.(img); voxel_size=voxel_size, orientation = orientation)
     ni = @set ni.header.pixdim[1] = -1.0
+
     niwrite(path_nifti, ni)
 
 end
@@ -91,14 +94,23 @@ function callSCT(params::Dict{Symbol, Any})
 
     path_nifti = params[:path_niftiMap]
     path_centerline = params[:path_centerline] * "centerline.nii"
+
+    # call SCT
     run(`sct_get_centerline -i $path_nifti -c t2s -o $path_centerline`)
+
     if params[:trust_SCT] == false
+
+        # call FSLEyes to inspect
         run(`fsleyes $path_nifti -cm greyscale $path_centerline -cm red`)
+
         options = ["yes", "no"]
         menu = RadioMenu(options)
         choice = request("Is the result satisfying?", menu)
+
+        # if not a good result, run sct again
         if choice == 2
             run(`sct_get_centerline -i $path_nifti -c t2s -o $path_centerline -method viewer`)
         end
+
     end
 end

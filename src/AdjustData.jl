@@ -73,9 +73,11 @@ function ExtractNoiseData!(rawData::RawAcquisitionData)
 
     flags = ExtractFlags(rawData)
     total_num = length(rawData.profiles)
+    
     if total_num != size(flags, 1)
         @error "size of flags and number of profiles in rawData do not match"
     end
+
     noisemat = Matrix{typeof(rawData.profiles[1].data)}
 
     for ii=1:total_num
@@ -107,6 +109,7 @@ function ReverseBipolar!(rawData::RawAcquisitionData)
 
     flags = ExtractFlags(rawData)
     total_num = length(rawData.profiles)
+
     if total_num != size(flags, 1)
         @error "size of flags and number of profiles in rawData do not match"
     end
@@ -180,9 +183,11 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 function AdjustSubsampleIndices!(acqData::AcquisitionData)
 
     if isempty(acqData.subsampleIndices[1])
+
         for ii = 1:size(acqData.subsampleIndices)[1]
             acqData.subsampleIndices[ii]=1:size(acqData.kdata[1,1,1])[1]
         end
+
     end
 
 end
@@ -207,26 +212,32 @@ function ExtractNavigator(rawData::RawAcquisitionData)
     contrasts = zeros(Int64, total_num)
     slices = zeros(Int64, total_num)
     lines = zeros(Int64, total_num)
+
     for ii = 1:total_num
+
         contrasts[ii] = rawData.profiles[ii].head.idx.contrast
         slices[ii] = rawData.profiles[ii].head.idx.slice
         lines[ii] = rawData.profiles[ii].head.idx.kspace_encode_step_1
+
     end
+
     # keep only the indexes of data saved in the first echo (this includes navigator)
     contrastsIndx = findall(x->x==0, contrasts)
     slices = slices[contrastsIndx]
     lines = lines[contrastsIndx]
 
-    nav = zeros(ComplexF32, size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2],
-        rawData.params["reconSize"][2], numberslices)
+    nav = zeros(ComplexF32, size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2], rawData.params["reconSize"][2], numberslices)
 
-    nav_time = zeros(Float64,
-        rawData.params["reconSize"][2], numberslices)
+    nav_time = zeros(Float64, rawData.params["reconSize"][2], numberslices)
+
     #Odd indexes are data first echo, Even indexes are navigator data
     for ii = 2:2:length(slices)
+
         nav[:,:,lines[ii]+1,slices[ii]+1] = rawData.profiles[contrastsIndx[ii]].data
         nav_time[lines[ii]+1,slices[ii]+1] = rawData.profiles[contrastsIndx[ii]].head.acquisition_time_stamp
+
     end
+
     #Remove the rows filled with zeroes
     lines = unique(lines) .+1
     nav = nav[:,:,lines,:]
@@ -251,17 +262,20 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 function selectEcho!(acqd::AcquisitionData, idx_echo::Vector{Int64})
 
     if !isempty(idx_echo)
+
         contrasts = size(acqd.kdata)[1]
         indices = Vector{Int64}(undef, contrasts)
+
         for ii=1:contrasts
             indices[ii] = ii
         end
+
         deleteat!(indices, idx_echo)
         deleteat!(acqd.subsampleIndices, indices)
         deleteat!(acqd.traj, indices)
-        acqd.kdata = acqd.kdata[idx_echo,:,:];
-    end
+        acqd.kdata = acqd.kdata[idx_echo,:,:]
 
+    end
 end
 
 """
@@ -281,10 +295,14 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
 function selectSlice!(acqd::AcquisitionData, idx_slice::Vector{Int64}, nav::Union{Array{Complex{T}, 4}, Nothing} = nothing, nav_time::Union{Array{Float64, 2}, Nothing} = nothing) where {T}
 
+    # get kdata from slice
     acqd.kdata = acqd.kdata[:,idx_slice,:]
+
     if !isnothing(nav) && !isnothing(nav_time)
+
         nav = nav[:,:,:,idx_slice]
         nav_time = nav_time[:,idx_slice]
+
     end
 
 end

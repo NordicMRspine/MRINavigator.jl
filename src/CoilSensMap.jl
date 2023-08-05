@@ -1,4 +1,4 @@
-export CompSensit, ResizeSensit, CompRoughMask
+export CompSensit, ResizeSensit!, CompRoughMask
 
 """
     sensit = CompSensit(acq::AcquisitionData, thresh = 0.135)
@@ -17,9 +17,9 @@ function CompSensit(acq::AcquisitionData, thresh = 0.135)
     sensit = espirit(acq,(6,6),30,eigThresh_1=0.02, eigThresh_2=0)
     slices = numSlices(acq)
     coils = numChannels(acq)
+
     # compute mask
     mask = CompRoughMask(acq, slices, thresh)
-
     for ii = 1:slices
 
         mask_slice = mask[:,:,ii]
@@ -55,6 +55,7 @@ function CompRoughMask(acq::AcquisitionData, slices::Int64, thresh)
     I_sum = sqrt.(sum(abs.(img) .^ 2, dims = 5)) .+ eps()
     I_sum = dropdims(I_sum, dims = tuple(findall(size(I_sum) .== 1)...))
     I_max = ones(Float64, slices)
+    
     mask = zeros(size(I_sum))
     for ii = 1:slices
         I_max[ii] = maximum(abs.(I_sum[:,:,ii]))
@@ -97,16 +98,19 @@ Add a 3 voxels safety margin.
 function removeBehindBack!(mask_slice::Array{T,2}) where{T}
 
     # remove noisy voxels on the left of the image
-    # corresponding to the back of the subject
+    # corresponding to the back of the subject 
     density = sum(mask_slice, dims = 1)[1,:]
+
     # compute dervative of points density
     lines = div(size(mask_slice, 2),2)
     dder = zeros(Int64, lines)
     for ii = 1:lines
         dder[ii] = density[ii+1] - density[ii]
     end
+
     # put to zero everything behind the subject back
     position = findmax(dder)[2] -3
+
     for jj=1:position
         mask_slice[:,jj].=0
     end
@@ -126,7 +130,9 @@ function homogeneousMask!(mask_slice::Array{T,2}) where{T}
     cartes_index_slice = CartesianIndices(mask_slice)
     Bimask_slice = convert(BitMatrix, mask_slice)
     hull = convexhull(Bimask_slice)
+
     push!(hull, hull[1])
+    
     inside = [inpolygon(p, hull; in=true, on=true, out=false) for p in cartes_index_slice]
     mask_slice[inside] .= 1
 
@@ -146,7 +152,7 @@ Image data and reference data must have the same slice center.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function ResizeSensit(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
+function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
 
     # Define the relevant sensit region assuming the same slices center between ref and image data
     (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
@@ -154,8 +160,10 @@ function ResizeSensit(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqD
 
     if freq_enc_samples[1] != sizeSensit[1] && freq_enc_samples[2] != sizeSensit[2]
         @warn "The coils sensitivity maps have already been resized, the function cannot be executed."
+    
     elseif freq_enc_FoV[1] < freq_enc_FoV[2] || phase_enc_FoV[1] < phase_enc_FoV[2]
         @error "The reference data field of view is smaller than the image data field of view."
+    
     else
         freq_enc_FoV_disc = round(Int64, (freq_enc_FoV[1] - freq_enc_FoV[2]) / (freq_enc_FoV[1]/freq_enc_samples[1]) / 2)
         phase_enc_FoV_disc = round(Int64, (phase_enc_FoV[1] - phase_enc_FoV[2]) / (phase_enc_FoV[1]/phase_enc_samples[1]) / 2)
@@ -169,15 +177,19 @@ function ResizeSensit(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acqD
         for ii in cartes_index
             mask[ii] = 1
         end
+
         # Linear interpolation
         sensit = mapslices(x ->imresize(x, (freq_enc_samples[2], phase_enc_samples[2])), sensit, dims=[1,2])
         mask = mapslices(x ->imresize(x, (freq_enc_samples[2], phase_enc_samples[2])), mask, dims=[1,2])
+
         # Remove interpolated outline
         cartes_index = findall(x -> x!=1, mask)
         for ii in cartes_index
             mask[ii] = 0
         end
+
         sensit = mask .* sensit
+        
     end
 end
 
@@ -196,7 +208,7 @@ Image data and reference data must have the same slice center.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function Find_scaling_sensit(acqMap::AcquisitionData, acqData::AcquisitionData) where {T}
+function Find_scaling_sensit(acqMap::AcquisitionData{T}, acqData::AcquisitionData{T}) where {T}
 
     freq_enc_FoV = [acqMap.fov[1], acqData.fov[1]]
     freq_enc_samples = [acqMap.encodingSize[1], acqData.encodingSize[1]]

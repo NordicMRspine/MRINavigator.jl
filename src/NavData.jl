@@ -1,6 +1,7 @@
 export additionalNavInput, navOutput
 
 mutable struct additionalNavInput
+
     numslices::Int64
     numechoes::Int64
     numsamples::Int64
@@ -15,6 +16,7 @@ mutable struct additionalNavInput
     noisemat::Array{Complex{Float32}, 2}
     trace::Union{Matrix{Float64}, Nothing}
     centerline::Union{Vector{Float64}, Nothing}
+
 end
 
 """
@@ -57,14 +59,18 @@ function additionalNavInput(
     numsamples = acqData.encodingSize[1]
     numlines = convert(Int64, size(acqData.kdata[1],1)/numsamples)
     TR = rawData.params["TR"]
+
     ii=1
     while rawData.profiles[ii].head.user_int[8] < rawData.profiles[ii+1].head.user_int[8]
         ii=ii+1
     end
+
+    # set up nav timing
     dt_nav = convert(Float64, rawData.profiles[ii-1].head.sample_time_us) .* 1e-6
     TE_nav = rawData.profiles[ii].head.user_int[8] .* 1e-6 # get TE nav
+
     if !isnothing(acqMap) && !isnothing(acqData)
-    (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
+        (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
     end
 
     return additionalNavInput(numslices, numechoes, numsamples, numlines, TR, TE_nav, dt_nav,
@@ -73,8 +79,10 @@ function additionalNavInput(
 end
 
 mutable struct navOutput
+
     navigator::Array{Float64, 4}
     centerline::Union{Array{Float64, 1}, Nothing}
     correlation::Union{Array{Float64, 1}, Matrix{Float64}, Nothing}
     wrapped_points::Union{Array{Int8, 2}, Nothing}
+    
 end
