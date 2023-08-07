@@ -1,19 +1,61 @@
 
-function test_AdjustData(datadir::String)
+function test_AdjustData_raw(datadir::String)
 
-    data = FileIO.load(joinpath(datadir, "data.jld2"), "data")
-    flags = ExtractFlags(data)
-    noisemat = ExtractNoiseData!(data, flags)
-    ReverseBipolar!(data, flags)
-    flags_Bireverse = ExtractFlags(data)
-    numProfiles = size(data.profiles, 1)
-    RemoveRef!(data, 1, 1)
+    rawData = FileIO.load(joinpath(datadir, "data.jld2"), "data")
+    flags = ExtractFlags(rawData)
+
+    # test order slices
+    number = length(rawData.profiles)
+    rawData = @set rawData.profiles[1].head.position[3] = rawData.profiles[1].head.position[3] + 1
+    rawData = @set rawData.profiles[1].head.idx.slice = 2
+    position = rawData.profiles[1].head.idx.slice
+    OrderSlices!(rawData)
+    position_ordered = rawData.profiles[1].head.idx.slice
+
+    @test position_ordered < position
+
+    # the noise acquision has flag 19
+    rawData.profiles[1].head.flags = rawData.profiles[1].head.flags + 2^18
+    noisemat_rawData = rawData.profiles[1].data
+    noisemat = ExtractNoiseData!(rawData)
+
+    @test any(flags_Bireverse[:,19] .== false)
+    @test noisemat == noisemat_rawData
+
+    # test reverse bipolar
+    rawData.profiles[1].head.flags = rawData.profiles[1].head.flags + 2^21
+    reversed_profile = rawData.profiles[1].data
+    ReverseBipolar!(rawData)
+    flags_Bireverse = ExtractFlags(rawData)
 
     @test any(flags_Bireverse[:,22] .== false)
-    @test any(flags_Bireverse[:,19] .== false)
-    @test size(data.profiles, 1) == numProfiles - 2
+    @test reversed_profile == reverse!(rawData.profiles[1].data)
+    
+    # check number of profiles
+    numflags = size(flags,1)
+    numProfiles = size(rawData.profiles, 1)
+    RemoveRef!(rawData)
+    slices = rawData.params["enc_lim_slice"].maximum + 1
+    echoes = size(rawData.params["TE"],1) + 1
+    
+    @test size(rawData.profiles, 1) == numProfiles - (slices * echoes)
+    @test numProfiles == numflags - 1
 
 end
+
+function test_AdjustData_acq(datadir::String)
+
+    rawData = FileIO.load(joinpath(datadir, "data.jld2"), "data")
+    acqData = AcquisitionData(rawData, estimateProfileCenter=true)
+    CopyTE!(rawData, acqData)
+    (nav, nav_time) = ExtractNavigator(rawData)
+    selectEcho!(acqData, 0)
+    selectSlice!(acqData, 0, nav, nav_time)
+
+    @test acqData.traj[1].TE === convert(typeof(acqData.traj[1].TE), rawData.params["TE"][1])
+
+end
+
 
 function test_SpineCenterline(datadir::String, tmpResdir::String)
     map = FileIO.load(joinpath(datadir, "map.jld2"), "map")
@@ -47,7 +89,7 @@ end
 
 function testdata(datadir::String, tmpResdir::String)
     @testset "DataTests" begin
-        test_AdjustData()
+        test_AdjustData_raw()
         test_SpineCenterline()
         test_CoilSensMap()
     end
