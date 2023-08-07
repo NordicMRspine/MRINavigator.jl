@@ -113,6 +113,7 @@ end
 function testdata(datadir::String, tmpResdir::String)
     @testset "DataTests" begin
         test_AdjustData_raw()
+        test_SpineCenterline()
         test_CoilSensMap()
         test_niftisave()
     end
