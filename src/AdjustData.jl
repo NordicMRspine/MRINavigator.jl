@@ -82,6 +82,7 @@ function ExtractNoiseData!(rawData::RawAcquisitionData)
 
     for ii=1:total_num
 
+        # noise acquisition flag in ISMRMRD format
         if flags[ii,19] == true
             noisemat = rawData.profiles[ii].data
             deleteat!(rawData.profiles, ii)
@@ -116,6 +117,7 @@ function ReverseBipolar!(rawData::RawAcquisitionData)
 
     for ii=1:total_num
 
+        # reflect line flag in ISMRMRD format
         if flags[ii,22] == true
             reverse!(rawData.profiles[ii].data, dims=1)
             rawData.profiles[ii].head.flags=rawData.profiles[ii].head.flags-(2^21)
@@ -163,7 +165,7 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 function CopyTE!(rawData::RawAcquisitionData, acqData::AcquisitionData)
 
     for ii=1:size(acqData.kdata)[1]
-        acqData.traj[ii].TE = rawData.params["TE"][ii]
+        acqData.traj[ii].TE = deepcopy(rawData.params["TE"][ii])
     end
 
 end
@@ -226,7 +228,7 @@ function ExtractNavigator(rawData::RawAcquisitionData)
     slices = slices[contrastsIndx]
     lines = lines[contrastsIndx]
 
-    nav = zeros(ComplexF32, size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2], rawData.params["reconSize"][2], numberslices)
+    nav = zeros(typeof(rawData.profiles[1].data[1,1]), size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2], rawData.params["reconSize"][2], numberslices)
 
     nav_time = zeros(Float64, rawData.params["reconSize"][2], numberslices)
 

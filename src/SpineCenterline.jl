@@ -96,12 +96,25 @@ function callSCT(params::Dict{Symbol, Any})
     path_centerline = params[:path_centerline] * "centerline.nii"
 
     # call SCT
-    run(`sct_get_centerline -i $path_nifti -c t2s -o $path_centerline`)
+    try
+        run(`sct_get_centerline -i $path_nifti -c t2s -o $path_centerline`)
+    catch e
+        if isa(e, UndefVarError)
+            println("Spinal cord toolbox is required. Please proceed to download and install (https://spinalcordtoolbox.com).
+            If it is installed but not running, export its path in the terminal profile.")
+        end
+    end
 
     if params[:trust_SCT] == false
 
         # call FSLEyes to inspect
-        run(`fsleyes $path_nifti -cm greyscale $path_centerline -cm red`)
+        try
+            run(`fsleyes $path_nifti -cm greyscale $path_centerline -cm red`)
+        catch e
+            if isa(e, UndefVarError)
+                println("FSLeyes is required. Please proceed to download and install (https://open.win.ox.ac.uk/pages/fsl/fsleyes/fsleyes/userdoc/install.html)")
+            end
+        end
 
         options = ["yes", "no"]
         menu = RadioMenu(options)
