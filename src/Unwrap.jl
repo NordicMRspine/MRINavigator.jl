@@ -54,7 +54,10 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
 
     # allow for only one sign change in the correlation across slices
     # adjust the correlation sign consequently
-    correlation = find_field_changes(correlation, slices)
+    # this is effective only if the number of slices is higher than 5
+    if slices > 5
+        correlation = find_field_changes(correlation, slices)
+    end
 
     # Invert navigator sign if the correlation is negative
     invertNavSign!(nav_norm, correlation, slices)
@@ -299,7 +302,8 @@ end
 Inhale air can lead to both positive and negative field variations depensing by the vertebral level.
 There are two regions where the field variations change sign, at the lungs extremities.
 It is reasonable to assume that MRI using a commercial spinal coil can not allow to record both these regions in the same acquisition.
-Therefore, only one field change in the correlation sign acorss sloces should be allowed.
+Therefore, only one field change in the correlation sign across slices should be allowed.
+This function works only if the number of slices is bigger than 5.
 
 # Arguments
 * `correlation::Union{Array{Float64, 1}, Matrix{Float64}}` - correlation vector between each navigator slice and the respiratory belt recording
