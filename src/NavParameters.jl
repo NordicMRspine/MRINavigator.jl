@@ -24,7 +24,7 @@ Define default parameters for data loading, navigator correction and image recon
 * `path_noise::String`                - path to the file where the noise acquisition will be saved. The file extension must be .jld2
 * `path_results::String`              - path to the results folder
 
-# Additional not required parameters are
+# Additional optional parameters are
 * `path_niftiMap::String`             - path to the file where the reconstructed reference data will be saved in nifti format. The file extension must be .nii
 * `path_centerline::String`           - path to the folder where the Spinal Cord Toolbox (SCT) centerline results will be saved
 * `path_physio::String`              - path to the physiological trace recording in .mat format. The variable should be a two columns vector.

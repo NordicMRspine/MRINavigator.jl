@@ -1,4 +1,4 @@
-export NavCorr!
+export NavCorr!, comp_centerline, wrap_corr!, TE_corr!, apply_corr!
 
 """
     navOutput = NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where {T}
@@ -62,13 +62,13 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     
     if params[:corr_type] == "FFT_unwrap"
         (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices, addData.TR)
-        nav = wrap_corr(nav, wrapped_points, correlation, addData.numslices)
+        nav = wrap_corr!(nav, wrapped_points, correlation, addData.numslices)
     end
 
     nav_return = deepcopy(nav)
     
     # Correct for different TEs
-    nav = TE_corr(nav, acqData, addData.dt_nav, addData.TE_nav, addData.numsamples, addData.numechoes)
+    nav = TE_corr!(nav, acqData, addData.dt_nav, addData.TE_nav, addData.numsamples, addData.numechoes)
     nav = exp.(im*nav)
 
     # Apply the correction to the data
@@ -139,7 +139,7 @@ function comp_centerline(addData::additionalNavInput)
 end
 
 """
-    nav = TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
+    nav = TE_corr!(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
 
 Compute the phase value for the navigator correction basing on the exact acquisition time of each data sample in the line and for each echo.
 Return a four dimensional navigator array.
@@ -154,7 +154,7 @@ Return a four dimensional navigator array.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
+function TE_corr!(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
 
     # Set up navigator phase timing
     nav = nav ./ TE_nav
@@ -230,7 +230,7 @@ function remove_ref_ph!(nav::Array{Complex{T}, 4}, lines::Int64, index::Int64) w
 end
 
 """
-    wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
+    wrap_corr!(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
 Unwrap the wrapped points identified with the find_wrapped funtion. These functions can be used only if physiological recording is available.
 
@@ -241,7 +241,7 @@ Unwrap the wrapped points identified with the find_wrapped funtion. These functi
 * `slices::Int64` - number of slices
 
 """
-function wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
+function wrap_corr!(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
     invertNavSign!(nav, correlation, slices)
     wrapped_points_local = reshape(wrapped_points, (1, 1, size(wrapped_points)...))
