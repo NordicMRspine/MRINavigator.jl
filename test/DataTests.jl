@@ -17,8 +17,9 @@ function test_AdjustData_raw(datadir::String)
     rawData.profiles[1].head.flags = rawData.profiles[1].head.flags + 2^18
     noisemat_rawData = rawData.profiles[1].data
     noisemat = ExtractNoiseData!(rawData)
+    flags_nonoise = ExtractFlags(rawData)
 
-    @test any(flags_Bireverse[:,19] .== false)
+    @test any(flags_nonoise[:,19] .== false)
     @test noisemat == noisemat_rawData
 
     # test reverse bipolar. The revese flag is number 22
@@ -42,8 +43,9 @@ function test_AdjustData_raw(datadir::String)
 
 end
 
-function test_AdjustData_acq(datadir::String, tmpResdir::String)
+function test_AdjustData_acq(datadir::String)
 
+    rawData = FileIO.load(joinpath(datadir, "data.jld2"), "data")
     numProfiles = size(rawData.profiles, 1)
     rawData = FileIO.load(joinpath(datadir, "data.jld2"), "data")
     acqData = AcquisitionData(rawData, estimateProfileCenter=true)
@@ -97,7 +99,7 @@ function test_CoilSensMap(datadir::String, tmpResdir::String)
 
 end
 
-function test_niftsave(datadir::String, tmpResdir::String)
+function test_niftisave(datadir::String, tmpResdir::String)
 
     map = FileIO.load(joinpath(datadir, "map.jld2"), "map")
     acq = AcquisitionData(map, estimateProfileCenter=true)
@@ -112,8 +114,9 @@ end
 
 function testdata(datadir::String, tmpResdir::String)
     @testset "DataTests" begin
-        test_AdjustData_raw()
-        test_CoilSensMap()
-        test_niftisave()
+        test_AdjustData_raw(datadir)
+        test_AdjustData_acq(datadir)
+        test_CoilSensMap(datadir, tmpResdir)
+        test_niftisave(datadir, tmpResdir)
     end
 end
