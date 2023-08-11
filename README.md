@@ -1,6 +1,6 @@
 # MRINavigator
-[![Build status](https://github.com/NordicMRspine/MRInavigator.jl/workflows/CI/badge.svg)](https://github.com/NordicMRspine/MRInavigator.jl/actions)
-[![codecov.io](http://codecov.io/github/NordicMRspine/MRInavigator.jl/coverage.svg?branch=setup)](http://codecov.io/github/NordicMRspine/MRInavigator.jl.jl?branch=setup)
+[![Build Status](https://github.com/Laura2305/MRINavigator.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/Laura2305/MRINavigator.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/Laura2305/MRINavigator.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/Laura2305/MRINavigator.jl)
 
 MRINavigator.jl provides multiple navigator-based correction pipelines for magnetic resonance data. These aim at demodulating time dependent field variations. The package was developed with a focus on spinal cord imaging, however it can be used for multiple imaging applications. 
 The corrections are to be applied on the raw data before the image reconstruction. MRIReco.jl can be used to reconstruct the images.
