@@ -26,9 +26,12 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     # Invert navigator sign if the correlation is negative
     invertNavSign!(nav_norm, correlation, slices)
 
-    # Find navigator slices with higher correlationt to the trace
+    # Find navigator slices with higher correlation to the trace
     max_corr = findmax(abs.(correlation))[1]
     std_corr = std(abs.(correlation))
+    if isnan(std_corr)
+        std_corr = 1
+    end
     corr_relevant = findall(>(max_corr - 1.5*std_corr), abs.(correlation))
     size_corr_relevant = size(corr_relevant,1)
 
