@@ -102,7 +102,7 @@ function test_FFTnav_unwrap(datadir::String, tmpResdir::String)
 
     # Simulate nav data
     nav = ones(Complex{Float32}, 1,1,128,1)
-    nav[1,1,:,1] = exp.(im * 2 * sin.(Array(0.5:0.5:64)))
+    nav[1,1,:,1] = exp.(im * 3.25 * sin.(Array(0.5:0.5:64)) .* sin.(Array(0:0.0235:3)))
     nav = repeat(nav, 256, 32, 1, 1)
 
     # Simulate resp recording
@@ -117,9 +117,6 @@ function test_FFTnav_unwrap(datadir::String, tmpResdir::String)
     params[:use_SCT] = true
     output = NavCorr!(nav, acqData, params, addData)
 
-
-
-
     # Reconstruct the data
     img_corr = Reconstruct(acqData, sensit, noise)
     img = Reconstruct(acqData_nocorr, sensit, noise)
@@ -132,9 +129,13 @@ function test_FFTnav_unwrap(datadir::String, tmpResdir::String)
     err = norm(vec(img_corr.data)-vec(img.data))/norm(vec(img.data))
     @test err > 1
 
-    @test norm(vec(output.navigator[1,1,:,1])-vec(angle.(nav[1,1,:,1])))/norm(vec(angle.(nav[1,1,:,1]))) < 0.06
+    @test 0.3 < norm(vec(output.navigator[1,1,:,1])-vec(angle.(nav[1,1,:,1])))/norm(vec(angle.(nav[1,1,:,1]))) < 0.5
 
     @test output.centerline == [128]
+
+    @test 0.7 < output.correlation[1] < 0.9
+
+    @test length(findall(x -> x==1, output.wrapped_points)) >= 1
     
 end
 
