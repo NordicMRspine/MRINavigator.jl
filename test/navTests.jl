@@ -117,6 +117,9 @@ function test_FFTnav_unwrap(datadir::String, tmpResdir::String)
     params[:use_SCT] = true
     output = NavCorr!(nav, acqData, params, addData)
 
+
+
+
     # Reconstruct the data
     img_corr = Reconstruct(acqData, sensit, noise)
     img = Reconstruct(acqData_nocorr, sensit, noise)
@@ -136,12 +139,11 @@ function test_FFTnav_unwrap(datadir::String, tmpResdir::String)
 end
 
 
-
 function test(datadir::String, tmpResdir::String)
     @testset "NavigatorTests" begin
         test_centerline_position(datadir::String)
         test_wrap_corr()
         test_apply_corr(datadir, tmpResdir)
-        test_FFTnav_unwrap()
+        test_FFTnav_unwrap(datadir, tmpResdir)
     end
 end
