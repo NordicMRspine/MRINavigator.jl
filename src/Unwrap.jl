@@ -1,5 +1,7 @@
+export find_wrapped
+
 """
-    find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Int64)
+    find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Float64)
 
 Identify the position of the wrapped points in the navigator phase estimates. The respiratory belt recording is necessary.
 Return the position of the wrapped points and the correlation between each navigator slice and the trace data.
@@ -9,9 +11,9 @@ Return the position of the wrapped points and the correlation between each navig
 * `nav_time::Array{Float64, 2}` - navigator data time stamps in ms from the beginning of the day, for each slice
 * `trace::Array{Float64, 2}` - physiological trace recording. Two columns vector. The first column contains the time stamps in ms from the beginning of the day
 * `slices::Int64` - number of slices
-* `TR::Int64` - acqusition repetition time (TR)
+* `TR::Float64` - acqusition repetition time (TR) in seconds
 """
-function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Int64)
+function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Float64)
 
     time = trace[:,1]
     trace_data = trace[:,2] ./ findmax(trace[:,2])[1] .* pi/2
@@ -270,7 +272,7 @@ end
 
 
 """
-    trace_time = align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Int64)
+    trace_time = align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Float64)
 
 Align the signal in the first imput (time stamps in the second imput) to the signal in the third imput (time stamps in the fourth input). acquisition TR in the last input.
 Use the finddelay function from DSP.jl, find the peak of the signals cross-correlation.
@@ -281,15 +283,16 @@ Return the new time vector for the signal in the third input.
 * `nav_time_align::Array{Float64, 1}` - time stamps for the navigator phase estimates in ms from the beginning of the day
 * `trace_data::Array{Float64, 1}` - respiratory belt recording  in ms from the beginning of the day
 * `time::Array{Float64, 1}` - time stamps for the respiratory belt recording in se
-* `TR::Int64` - acquisition repetition time
+* `TR::Float64` - acquisition repetition time in seconds
 """
-function align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Int64)
+function align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Float64)
 
     time_relevant = findall(x -> (x>(findmin(abs.(nav_time_align))[1]) && x< (findmax(abs.(nav_time_align))[1])), time)
     delay = alignsignals(trace_data[time_relevant], nav_align[time_relevant])[2]
     trace_time = time
+    sampling_freq = size(time,1)/(time[end]-time[1])*1000
 
-    if  -TR/2 < delay < TR/2
+    if  -TR/2 < delay / sampling_freq < TR/2
         trace_time = circshift(time, delay)
     end
 

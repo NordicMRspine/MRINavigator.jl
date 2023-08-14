@@ -47,7 +47,6 @@ function test_AdjustData_acq(datadir::String)
 
     rawData = FileIO.load(joinpath(datadir, "data.jld2"), "data")
     numProfiles = size(rawData.profiles, 1)
-    rawData = FileIO.load(joinpath(datadir, "data.jld2"), "data")
     acqData = AcquisitionData(rawData, estimateProfileCenter=true)
     CopyTE!(rawData, acqData)
     (nav, nav_time) = ExtractNavigator(rawData)
@@ -73,7 +72,7 @@ function test_CoilSensMap(datadir::String, tmpResdir::String)
     acqData = AcquisitionData(data, estimateProfileCenter=true)
     sensit = CompSensit(acqMap)
     #binarize sensit
-    thresh = 0.5* mean(abs.(sensit))
+    thresh = 0.5 * mean(abs.(sensit))
     cartes_index_binar = findall(x -> x > thresh, abs.(sensit))
     sensit_binar = zeros(Int64, size(sensit))
     sensit_binar[cartes_index_binar] .= 1
@@ -120,3 +119,5 @@ function testdata(datadir::String, tmpResdir::String)
         test_niftisave(datadir, tmpResdir)
     end
 end
+
+testdata(datadir, tmpResdir)

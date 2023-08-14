@@ -1,8 +1,12 @@
 using MRINavigator
+using MRIReco
+using MRICoilSensitivities
 using FileIO
 using Test
 using Coverage
 using Setfield
+using Statistics
+using ImageUtils
 
 using Scratch
 using LazyArtifacts
