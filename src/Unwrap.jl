@@ -289,8 +289,7 @@ function align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, 
     delay = alignsignals(trace_data[time_relevant], nav_align[time_relevant])[2]
     trace_time = time
 
-    if delay < TR/2
-        print(delay)
+    if  -TR/2 < delay < TR/2
         trace_time = circshift(time, delay)
     end
 
