@@ -6,7 +6,7 @@ mutable struct additionalNavInput
     numechoes::Int64
     numsamples::Int64
     numlines::Int64
-    TR::Int64
+    TR::Float64
     TE_nav::Float64
     dt_nav::Float64
     freq_enc_FoV::Union{Array{Int64}, Nothing}
@@ -58,7 +58,7 @@ function additionalNavInput(
     numechoes = numContrasts(acqData)
     numsamples = acqData.encodingSize[1]
     numlines = convert(Int64, size(acqData.kdata[1],1)/numsamples)
-    TR = rawData.params["TR"]
+    TR = rawData.params["TR"] *1e-3
 
     ii=1
     while rawData.profiles[ii].head.user_int[8] < rawData.profiles[ii+1].head.user_int[8]
