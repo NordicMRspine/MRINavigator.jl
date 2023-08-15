@@ -166,6 +166,6 @@ function convertRawToAcq(rawData::RawAcquisitionData)
     AdjustSubsampleIndices!(acqData)
     acqData = convertUndersampledData(acqData)
 
-    return acqDats
+    return acqData
 
 end
