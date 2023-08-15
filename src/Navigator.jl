@@ -61,7 +61,7 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     wrapped_points = nothing
     
     if params[:corr_type] == "FFT_unwrap"
-        (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices, addData.TR)
+        (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices)
         nav = wrap_corr!(nav, wrapped_points, correlation, addData.numslices)
     end
 

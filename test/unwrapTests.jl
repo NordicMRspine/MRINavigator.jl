@@ -16,9 +16,8 @@ function test_find_wrapped()
     trace_time = range(findmin(nav_time)[1] - 9 * 500, findmax(nav_time)[1] + 8 * 500, length(trace_data))
     trace = hcat(trace_time, trace_data)
     slices = 1
-    TR = convert(Int64, rawData.params["TR"]) .* 1e-3
 
-    (wrapped_points, correlation) = find_wrapped(nav, nav_time, trace, slices, TR)
+    (wrapped_points, correlation) = find_wrapped(nav, nav_time, trace, slices)
     wrapped_computed = findall(x-> x==1, wrapped_points)
 
     nav = wrap_corr!(nav, wrapped_points, correlation, 1)
