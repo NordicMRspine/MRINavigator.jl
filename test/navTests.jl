@@ -8,7 +8,7 @@ function test_centerline_position(datadir::String)
     noise = FileIO.load(joinpath(datadir, "noise.jld2"), "noise")
     centerline = [32.0]
     addData = additionalNavInput(noise, rawData, acqData, acqMap, nothing, nothing, centerline)
-    centerline = comp_centerline(addData)
+    centerline = comp_centerline_pos(addData)
 
     @test centerline == [128]
 end
@@ -116,7 +116,7 @@ function test_FFTnav_unwrap(datadir::String)
     addData = additionalNavInput(noise, rawData, acqData, acqMap, nav_time, trace, centerline)
     params = defaultNavParams()
     params[:corr_type] = "FFT_unwrap"
-    params[:use_SCT] = true
+    params[:use_centerline] = true
     output = NavCorr!(nav, acqData, params, addData)
 
     # Reconstruct the data
