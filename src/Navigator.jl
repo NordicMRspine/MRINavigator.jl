@@ -1,4 +1,4 @@
-export NavCorr!, comp_centerline, wrap_corr!, TE_corr!, apply_corr!
+export NavCorr!, comp_centerline_pos, wrap_corr!, TE_corr!, apply_corr!
 
 """
     navOutput = NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where {T}
@@ -28,8 +28,8 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
         #noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
 
         nav_center = div(addData.numsamples, 2)
-        if params[:use_SCT] == true
-            centerline = comp_centerline(addData)
+        if params[:use_centerline] == true
+            centerline = comp_centerline_pos(addData)
             for ii = 1:addData.numslices
                 nav[:,:,:,ii] = circshift(nav[:,:,:,ii], nav_center-centerline[ii])
             end
@@ -111,14 +111,14 @@ function comp_weights(navabs::Array{T, 4}, noisestd::Matrix{T}, lines::Int64, sl
 end
 
 """
-    centerline = comp_centerline(addData::additionalNavInput)
+    centerline = comp_centerline_pos(addData::additionalNavInput)
 
 Convert and return centerline position from the reference data cordinate to the acquisition data coordinates (number of voxels).
 
 # Arguments
 * `addData::additionalNavInput` - mandatory additional data structure obtained with the constructor: additionalNavInput
 """
-function comp_centerline(addData::additionalNavInput)
+function comp_centerline_pos(addData::additionalNavInput)
 
     # Compute resolution and disc
     freq_enc_ref_res = addData.freq_enc_FoV[1] / addData.freq_enc_samples[1]

@@ -131,10 +131,12 @@ end
 """
     RemoveRef!(rawData::RawAcquisitionData, slices::Union{Vector{Int64}, Nothing}, echoes::Union{Vector{Int64}, Nothing})
 
-Remove reference data that are not useful for the navigator-based crrection from acquisitions with phase stabilization on Siemens scanners.
+Remove reference data that are not useful for the navigator-based correction from acquisitions with phase stabilization on Siemens scanners.
+Make sure that this is needed on your data checking the time stamps with mapVBVD in Matlab.
 Not solid to recalls.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+mapVBVD reference: https://github.com/CIC-methods/FID-A/blob/master/inputOutput/mapVBVD/README.md
 
 # Arguments
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
@@ -201,6 +203,7 @@ end
 Extract the navigator profiles from the MRIReco.jl raw data structure.
 These are registered with the same indices (contract, slice, encoding step) as the image data for the first echo time.
 Return a navigator array and a navigator time array. The navigator array has four dimensions in order: k-space samples, coils, k-space lines, slices.
+Effective only if the navigator profile was acquired after the first image profile.
     
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
@@ -208,6 +211,8 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 * `rawData::RawAcquisitionData` - raw data structure obtained loading raw data with MRIReco.jl
 """
 function ExtractNavigator(rawData::RawAcquisitionData)
+
+    @info "The navigaotr extraction is effective only if the navigator profile was acquired after the first image profile."
 
     total_num = length(rawData.profiles)
     numberslices = rawData.params["enc_lim_slice"].maximum +1

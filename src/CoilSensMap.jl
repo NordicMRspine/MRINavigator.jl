@@ -1,7 +1,7 @@
-export CompSensit, ResizeSensit!, CompRoughMask
+export CompSensit, ResizeSensit!, CompRoughMask, CompResizeSaveSensit
 
 """
-    sensit = CompSensit(acq::AcquisitionData, thresh = 0.135)
+    sensit = CompSensit(acq::AcquisitionData, thresh = 0.13)
 
 Compute the coils sensitivity maps with masking tuned for spinal cord imaging.
 Use MRICoilSensitivities.jl from MRIReco.jl alternatively.
@@ -12,7 +12,7 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
 * `tresh::Float64` - masking treshold: increase for reduced mask size, decrease for extended mask size
 """
-function CompSensit(acq::AcquisitionData, thresh = 0.135)
+function CompSensit(acq::AcquisitionData, thresh = 0.13)
 
     sensit = espirit(acq,(6,6),30,eigThresh_1=0.02, eigThresh_2=0)
     slices = numSlices(acq)
@@ -216,5 +216,27 @@ function Find_scaling_sensit(acqMap::AcquisitionData{T}, acqData::AcquisitionDat
     phase_enc_samples = [acqMap.encodingSize[2], acqData.encodingSize[2]]
 
     return freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples
+
+end
+
+"""
+    CompResizeSaveSensit(acqMap::AcquisitionData, acqData::AcquisitionData, path_sensit::String)
+
+Compute, resize to the image data dimension and save the coils sensitivity maps with masking tuned for spinal cord imaging.
+Use MRICoilSensitivities.jl from MRIReco.jl alternatively.
+
+MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
+
+# Arguments
+* `acqMap::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
+* `tresh::Float64` - masking treshold: increase for reduced mask size, decrease for extended mask size
+"""
+function CompResizeSaveSensit(acqMap::AcquisitionData, acqData::AcquisitionData, path_sensit::String, thresh = 0.13)
+
+    sensit = CompSensit(acqMap, thresh)
+    sensit = ResizeSensit!(sensit, acqMap, acqData)
+    #Save coil sensitivity
+    FileIO.save(path_sensit,"sensit",sensit)
 
 end
