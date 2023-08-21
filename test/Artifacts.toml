@@ -1,0 +1,7 @@
+[TestDataNavigator]
+git-tree-sha1 = "208c7712788dc5e36c33a94974dbc847aade46f2"
+lazy = true
+
+    [[TestDataNavigator.download]]
+    sha256 = "d83423df8642b8d445c69ecca8a012265cb7a0d0ca25bd153a3044d953a0597f"
+    url = "https://github.com/NordicMRspine/TestData/raw/main/TestData.tar.gz"
