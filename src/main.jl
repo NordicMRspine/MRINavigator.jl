@@ -8,7 +8,6 @@ Run the navigator pipeline. Return reconstructed image and navigaotr correction 
 # Arguments
 * `params::Dict{Symbol, Any}` - MRINavigator parameter structure, check defaultNavParams() for info
 """
-
 function runNavPipeline(params::Dict{Symbol, Any})
     
     findCenterline(params)
