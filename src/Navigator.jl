@@ -17,7 +17,6 @@ Please choose the pipeline using the corr_type filed in the params dictionary.
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 """
-
 function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where{T}
     
     #navigator[k-space samples, coils, k-space lines, slices]
