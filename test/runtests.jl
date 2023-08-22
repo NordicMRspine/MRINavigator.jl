@@ -7,7 +7,6 @@ using Coverage
 using Setfield
 using Statistics
 using ImageUtils
-using JLD2
 
 using Scratch
 using LazyArtifacts
