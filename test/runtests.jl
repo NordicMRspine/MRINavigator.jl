@@ -11,7 +11,7 @@ using ImageUtils
 using Scratch
 using LazyArtifacts
 
-const datadir = joinpath(artifact"TestDataNavigator", "data")
+const datadir = joinpath(artifact"TestDataNavigator", "Data")
 @info "The test data is located at $datadir."
 
 const tmpResdir  = @get_scratch!("tmp")
