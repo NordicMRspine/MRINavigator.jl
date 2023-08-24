@@ -25,6 +25,7 @@ DSP = "0.7"
 DataInterpolations = "4"
 MRICoilSensitivities = "0.1"
 MRIFiles = "0.1"
+NIfTI = "0.6"
 PolygonOps = "0.1"
 julia = "1.3"
 
