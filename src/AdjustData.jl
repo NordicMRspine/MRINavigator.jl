@@ -212,7 +212,7 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
 function ExtractNavigator(rawData::RawAcquisitionData)
 
-    @info "The navigaotr extraction is effective only if the navigator profile was acquired after the first image profile."
+    @info "The navigator extraction is effective only if the navigator profile was acquired after the first image profile."
 
     total_num = length(rawData.profiles)
     numberslices = rawData.params["enc_lim_slice"].maximum +1
