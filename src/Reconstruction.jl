@@ -12,8 +12,6 @@ Call MRIReco.jl reconstruction function and return reconstructed image. Only sin
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-
-
 function Reconstruct(acqd::AcquisitionData,
                     sensit::Array{Complex{T},4},
                     noisemat::Union{Array{Complex{T}},Nothing} = nothing) where {T} 

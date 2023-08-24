@@ -11,6 +11,11 @@ using NIfTI
 using REPL.TerminalMenus
 using DataInterpolations
 using DSP
+using FileIO
+using MAT
+using CSV
+using DataFrames
+
 
 include("AdjustData.jl")
 include("CoilSensMap.jl")
