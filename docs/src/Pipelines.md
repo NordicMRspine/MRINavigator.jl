@@ -1,4 +1,3 @@
 # Navigator-based correction pipelines
 
-
-![Phantom](./assets/pipeline.png)
+![Pipelines](./assets/pipeline.png)

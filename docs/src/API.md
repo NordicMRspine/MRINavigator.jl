@@ -1,6 +1,6 @@
 # API
 
-This page contains documentation of the public API of MRINavigator. In the Julia REPL one can access this documentation by entering the help mode with ? and then writing the function for which the documentation should be shown.
+This page contains documentation of the public API of MRINavigator. In the Julia REPL one can access this documentation by entering the help mode with `?` and then writing the function for which the documentation should be shown.
 
 # Run compact pipeline
 ```@docs
