@@ -14,10 +14,10 @@ MRINavigator.convertRawToAcq :: Tuple{MRIBase.RawAcquisitionData}
 <!--
 ## Coil sensitivity maps
 ```@docs
-MRINavigator.CompSensit :: Union{Tuple{MRIBase.AcquisitionData}, Tuple{MRIBase.AcquisitionData, Any}}
-MRINavigator.CompRoughMask :: Tuple{MRIBase.AcquisitionData, Int64, Any}
-MRINavigator.ResizeSensit! :: Union{Tuple{T}, Tuple{Array{Complex{T}, 4}, MRIBase.AcquisitionData, MRIBase.AcquisitionData}} where T
-MRINavigator.CompResizeSaveSensit :: Union{Tuple{MRIBase.AcquisitionData, MRIBase.AcquisitionData, String}, Tuple{MRIBase.AcquisitionData, MRIBase.AcquisitionData, String, Any}}
+MRINavigator.CompSensit
+MRINavigator.CompRoughMask
+MRINavigator.ResizeSensit!
+MRINavigator.CompResizeSaveSensit
 ```
 
 ## Find centerline
