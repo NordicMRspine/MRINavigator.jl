@@ -1,6 +1,6 @@
 # Get started
 
-There are available [https://github.com/NordicMRspine/UserExample_MRINavigator](user examples)
+There are available [user examples](https://github.com/NordicMRspine/UserExample_MRINavigator)
 
 # User examples
 
