@@ -1,1 +1,3 @@
-# Explain here the pipleines
+# Navigator-based correction pipelines
+
+![Phantom](./assets/phantom.pdf)
