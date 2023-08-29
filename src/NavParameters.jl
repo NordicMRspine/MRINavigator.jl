@@ -31,7 +31,6 @@ Define default parameters for data loading, navigator correction and image recon
 
 ISMRMRD reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.26089
 SCT reference: https://spinalcordtoolbox.com
-
 """
 function defaultNavParams()
 

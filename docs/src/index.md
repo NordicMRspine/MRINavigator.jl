@@ -6,8 +6,8 @@
 ```@contents
 Pages = [
     "index.md",
-    "Pipelines.md",
     "GettingStarted.md",
+    "Pipelines.md",
     "API.md"
 ]
 Depth = 2
@@ -36,7 +36,7 @@ To use some package functionalities external softwares are necessary. These incl
 * [Spinal Cord Toolbox (SCT)](https://spinalcordtoolbox.com)
 * [FSLeyes](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes)
 Using these should improve the correction outcome of the pipelines including a fourier transform (FFT) step. This is only relevant for spinal cord acquisitions.
-For additinal information read the [Getting Started](@ref) and [Pipelines](@ref) sections.
+For additinal information read the [Get started](@ref) and [Navigator-based correction pipelines](@ref) sections.
 
 ## Testing MRINavigator
 To make sure that the package is correctly installed and works, start `julia` from the command line, type `]` to enter the package manager REPL mode. Then enter
@@ -50,7 +50,7 @@ To update MRINavigator to the latest version, start `julia` from the command lin
 pkg> update MRINavigator
 ```
 ## Navigator-based correction
-Multi-echo gradient-echo (GRE) sequence are commonly acquired both in research labs and clinical practice. However, one of their main limitations is the sensitivity to field instabilities both in space and time. Indeed, for the signal spatial encoding to be effective a background homogeneous field in time and space is required. Time-varying background fields can lead to phase modulation between k-space lines, and therefore TE-dependent ghosting artefacts. [Navigator](https://www.sciencedirect.com/science/article/pii/S1053811910003356?via%3Dihub) readouts in the k-space center can be used to measure the intensity of the filed fluctuations allowing to demodulate the acquired signal before the image reconstruction. The standard navigaotr-based correction was developed for brain imaging and it is not robus when applied in other areas e.g. the spinal cord. When failing the correction can even exhacerbate the artifacts. This package provides optimised post-processing pipelines to correct for dynamic field instabilities in GRE sequences. For additinal information read the [Pipelines](@ref) section.
+Multi-echo gradient-echo (GRE) sequence are commonly acquired both in research labs and clinical practice. However, one of their main limitations is the sensitivity to field instabilities both in space and time. Indeed, for the signal spatial encoding to be effective a background homogeneous field in time and space is required. Time-varying background fields can lead to phase modulation between k-space lines, and therefore TE-dependent ghosting artefacts. [Navigator](https://www.sciencedirect.com/science/article/pii/S1053811910003356?via%3Dihub) readouts in the k-space center can be used to measure the intensity of the filed fluctuations allowing to demodulate the acquired signal before the image reconstruction. The standard navigaotr-based correction was developed for brain imaging and it is not robus when applied in other areas e.g. the spinal cord. When failing the correction can even exhacerbate the artifacts. This package provides optimised post-processing pipelines to correct for dynamic field instabilities in GRE sequences. For additinal information read the [Navigator-based correction pipelines](@ref) section.
 
 ## Plotting
 `MRINavigator` is not depending on a particular plotting package since there

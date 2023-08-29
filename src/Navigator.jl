@@ -22,7 +22,8 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     #navigator[k-space samples, coils, k-space lines, slices]
     # compute the navigator fourier transform in the readout direction, only for FFT case
     centerline = nothing
-    if params[:corr_type] != "knav"
+    corr_type = split(params[:corr_type], "_")
+    if corr_type[1] != "knav"
         nav = ifftshift(ifft(fftshift(nav, [1]), [1]), [1])
         #noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
 
@@ -59,9 +60,12 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     correlation = nothing
     wrapped_points = nothing
     
-    if params[:corr_type] == "FFT_unwrap"
-        (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices)
-        nav = wrap_corr!(nav, wrapped_points, correlation, addData.numslices)
+    corr_type = split(params[:corr_type], "_")
+    if size(corr_type, 1) == 2
+        if corr_type[2] == "unwrap"
+            (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices)
+            nav = wrap_corr!(nav, wrapped_points, correlation, addData.numslices)
+        end
     end
 
     nav_return = deepcopy(nav)
