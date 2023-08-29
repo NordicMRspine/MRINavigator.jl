@@ -17,7 +17,7 @@ Depth = 2
 MRINavigator provides multiple navigator-based correction pipelines for Magnetic Resonance (MR) images. These aim at demodulating time-dependent field variations present in multi echo-gradient echo acquisitions. The package was developed with a focus on spinal cord imaging, however it can be used for multiple imaging applications. The corrections are to be applied on the raw data before the image reconstruction. [MRIReco.jl](https://github.com/MagneticResonanceImaging/MRIReco.jl) can be used to reconstruct the images.
 
 !!! note
-    MRINavigator.jl is newly published and any feedback is more than welcome. Please report any bugs or features under issues in the GitHub folder.
+    MRINavigator.jl is newly published and any feedback is welcome. Please report any bugs or features under issues in the GitHub folder.
 
 ## Installation
 Start `julia` and open the package manager REPL mode by entering `]`. Then enter
@@ -55,6 +55,11 @@ Multi-echo gradient-echo (GRE) sequence are commonly acquired both in research l
 ## Plotting
 `MRINavigator` is not depending on a particular plotting package since there
 are various plotting packages available in Julia.
+
+## Acknowledgements
+This package uses the reconstruction functions and data structures available in [MRIReco.jl](https://github.com/MagneticResonanceImaging/MRIReco.jl).
+
+T. Knopp and M. Grosser (2021). [MRIReco.jl: An MRI Reconstruction Framework written in Julia]( https://doi.org/10.1002/mrm.28792). Magnetic Resonance in Medicine. 2021.
 
 ## Citing this work
 If you use MRINavigator in you research please cite the following:
