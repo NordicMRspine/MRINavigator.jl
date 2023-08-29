@@ -17,7 +17,7 @@ Depth = 2
 MRINavigator provides multiple navigator-based correction pipelines for Magnetic Resonance (MR) images. These aim at demodulating time-dependent field variations present in multi echo-gradient echo acquisitions. The package was developed with a focus on spinal cord imaging, however it can be used for multiple imaging applications. The corrections are to be applied on the raw data before the image reconstruction. [MRIReco.jl](https://github.com/MagneticResonanceImaging/MRIReco.jl) can be used to reconstruct the images.
 
 !!! note
-    MRINavigator.jl is newly published and any feedback is more than welcome.
+    MRINavigator.jl is newly published and any feedback is more than welcome. Please report any bugs or features under issues in the GitHub folder.
 
 ## Installation
 Start `julia` and open the package manager REPL mode by entering `]`. Then enter
@@ -31,7 +31,7 @@ pkg> dev MRINavigator
 ```
 More information on how to develop a package can be found in the Julia documentation.
 
-### requirements
+### Requirements
 To use some package functionalities external softwares are necessary. These include
 * [Spinal Cord Toolbox (SCT)](https://spinalcordtoolbox.com)
 * [FSLeyes](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes)
