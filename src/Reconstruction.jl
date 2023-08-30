@@ -41,7 +41,7 @@ end
 """
     img = directreco(acq::AcquisitionData)
 
-Call MRIReco.jl recpnstruction function and return reconstructed image. Reconstruct coils separately.
+Call MRIReco.jl reconstruction function and return reconstructed image. Reconstruct coils separately.
 
 # Arguments
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
