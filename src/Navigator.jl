@@ -5,7 +5,7 @@ export NavCorr!, comp_centerline_pos, wrap_corr!, TE_corr!, apply_corr!
 
 Compute the navigator-based correction and apply it to the acquisition data. Multiple pipelines are available: "knav", "FFT" and "FFT_unwrap".
 Return navigator trace, spinal cord centerline in the reconstructed image coordinates, 
-Correlation between nagigator and belt data for each slice and position of wrapped points for each slices.
+Correlation between navigator and belt data for each slice and position of wrapped points for each slices.
 Please choose the pipeline using the corr_type filed in the params dictionary.
 
 # Arguments
@@ -19,12 +19,12 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
 function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where{T}
     
-    #navigator[k-space samples, coils, k-space lines, slices]
+    # navigator[k-space samples, coils, k-space lines, slices]
     # compute the navigator fourier transform in the readout direction, only for FFT case
     centerline = nothing
     if params[:corr_type] != "knav"
         nav = ifftshift(ifft(fftshift(nav, [1]), [1]), [1])
-        #noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
+        # noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
 
         nav_center = div(addData.numsamples, 2)
         if params[:use_centerline] == true
@@ -141,7 +141,7 @@ end
     nav = TE_corr!(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
 
 Compute the phase value for the navigator correction basing on the exact acquisition time of each data sample in the line and for each echo.
-Return a four dimensional navigator array.
+Return a four-dimensional navigator array.
 
 # Arguments
 * `nav::Array{T, 4}` - phase estimates obtained from the navigator data

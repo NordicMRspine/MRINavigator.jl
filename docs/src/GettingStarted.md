@@ -1,1 +1,1 @@
-# Eplain here how to get started
+# Explain here how to get started

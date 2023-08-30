@@ -4,7 +4,7 @@ export ReconstructSaveMap, ReconstructMap, niftiSaveImg, callSCT, findCenterline
 """
     ReconstructSaveMap(path_nifti::String, path_ref::String)
 
-Reconstruct the coil sensitivity map using the MRIReco.jl function and save it in nifti format without spatial informations.
+Reconstruct the coil sensitivity map using the MRIReco.jl function and save it in nifti format without spatial information.
 
 # Arguments
 * `path_nifti::String` - path of the nifti file. The file must have .nii extension
