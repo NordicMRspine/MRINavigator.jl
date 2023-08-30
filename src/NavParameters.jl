@@ -27,7 +27,7 @@ Define default parameters for data loading, navigator correction and image recon
 * `path_niftiMap::String`             - path to the file where the reconstructed reference data will be saved in nifti format. The file extension must be .nii
 * `path_centerline::String`           - path to the folder where the Spinal Cord Toolbox (SCT) centerline results will be saved
 * `path_physio::String`              - path to the physiological trace recording in .mat format. The variable should be a two columns vector (1:time [ms], 2:trace).
-                                        The time should be expressed in seconds from the beginning of the day and contains time points befroe and after the image acquisiton (at least 2 s).
+                                        The time should be expressed in seconds from the beginning of the day and contain time points before and after the image acquisiton (at least 4 s).
 
 ISMRMRD reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.26089
 SCT reference: https://spinalcordtoolbox.com
