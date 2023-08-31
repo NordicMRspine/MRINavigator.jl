@@ -1,11 +1,11 @@
-export NavCorr!
+export NavCorr!, comp_centerline_pos, wrap_corr!, TE_corr!, apply_corr!
 
 """
     navOutput = NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where {T}
 
 Compute the navigator-based correction and apply it to the acquisition data. Multiple pipelines are available: "knav", "FFT" and "FFT_unwrap".
 Return navigator trace, spinal cord centerline in the reconstructed image coordinates, 
-Correlation between nagigator and belt data for each slice and position of wrapped points for each slices.
+Correlation between navigator and belt data for each slice and position of wrapped points for each slices.
 Please choose the pipeline using the corr_type filed in the params dictionary.
 
 # Arguments
@@ -17,19 +17,19 @@ Please choose the pipeline using the corr_type filed in the params dictionary.
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 """
-
 function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::Dict{Symbol, Any}, addData::additionalNavInput) where{T}
     
-    #navigator[k-space samples, coils, k-space lines, slices]
+    # navigator[k-space samples, coils, k-space lines, slices]
     # compute the navigator fourier transform in the readout direction, only for FFT case
     centerline = nothing
-    if params[:corr_type] != "knav"
+    corr_type = split(params[:corr_type], "_")
+    if corr_type[1] != "knav"
         nav = ifftshift(ifft(fftshift(nav, [1]), [1]), [1])
-        #noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
+        # noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
 
         nav_center = div(addData.numsamples, 2)
-        if params[:use_SCT] == true
-            centerline = comp_centerline(addData)
+        if params[:use_centerline] == true
+            centerline = comp_centerline_pos(addData)
             for ii = 1:addData.numslices
                 nav[:,:,:,ii] = circshift(nav[:,:,:,ii], nav_center-centerline[ii])
             end
@@ -60,15 +60,18 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     correlation = nothing
     wrapped_points = nothing
     
-    if params[:corr_type] == "FFT_unwrap"
-        (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices, addData.TR)
-        nav = wrap_corr(nav, wrapped_points, correlation, addData.numslices)
+    corr_type = split(params[:corr_type], "_")
+    if size(corr_type, 1) == 2
+        if corr_type[2] == "unwrap"
+            (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices)
+            nav = wrap_corr!(nav, wrapped_points, correlation, addData.numslices)
+        end
     end
 
     nav_return = deepcopy(nav)
     
     # Correct for different TEs
-    nav = TE_corr(nav, acqData, addData.dt_nav, addData.TE_nav, addData.numsamples, addData.numechoes)
+    nav = TE_corr!(nav, acqData, addData.dt_nav, addData.TE_nav, addData.numsamples, addData.numechoes)
     nav = exp.(im*nav)
 
     # Apply the correction to the data
@@ -111,14 +114,14 @@ function comp_weights(navabs::Array{T, 4}, noisestd::Matrix{T}, lines::Int64, sl
 end
 
 """
-    centerline = comp_centerline(addData::additionalNavInput)
+    centerline = comp_centerline_pos(addData::additionalNavInput)
 
 Convert and return centerline position from the reference data cordinate to the acquisition data coordinates (number of voxels).
 
 # Arguments
 * `addData::additionalNavInput` - mandatory additional data structure obtained with the constructor: additionalNavInput
 """
-function comp_centerline(addData::additionalNavInput)
+function comp_centerline_pos(addData::additionalNavInput)
 
     # Compute resolution and disc
     freq_enc_ref_res = addData.freq_enc_FoV[1] / addData.freq_enc_samples[1]
@@ -139,10 +142,10 @@ function comp_centerline(addData::additionalNavInput)
 end
 
 """
-    nav = TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
+    nav = TE_corr!(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
 
 Compute the phase value for the navigator correction basing on the exact acquisition time of each data sample in the line and for each echo.
-Return a four dimensional navigator array.
+Return a four-dimensional navigator array.
 
 # Arguments
 * `nav::Array{T, 4}` - phase estimates obtained from the navigator data
@@ -154,7 +157,7 @@ Return a four dimensional navigator array.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function TE_corr(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
+function TE_corr!(nav::Array{T, 4}, acqd::AcquisitionData, dt_nav::Float64, TE_nav::Float64, numsamples::Int64, numechoes::Int64) where {T}
 
     # Set up navigator phase timing
     nav = nav ./ TE_nav
@@ -230,7 +233,7 @@ function remove_ref_ph!(nav::Array{Complex{T}, 4}, lines::Int64, index::Int64) w
 end
 
 """
-    wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
+    wrap_corr!(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
 Unwrap the wrapped points identified with the find_wrapped funtion. These functions can be used only if physiological recording is available.
 
@@ -241,7 +244,7 @@ Unwrap the wrapped points identified with the find_wrapped funtion. These functi
 * `slices::Int64` - number of slices
 
 """
-function wrap_corr(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
+function wrap_corr!(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
     invertNavSign!(nav, correlation, slices)
     wrapped_points_local = reshape(wrapped_points, (1, 1, size(wrapped_points)...))

@@ -1,23 +1,26 @@
+export find_wrapped
+
 """
-    find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Int64)
+    find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64)
 
 Identify the position of the wrapped points in the navigator phase estimates. The respiratory belt recording is necessary.
 Return the position of the wrapped points and the correlation between each navigator slice and the trace data.
 
 # Arguments
-* `nav::Array{Float64, 4}` - navigator phase estimates
-* `nav_time::Array{Float64, 2}` - navigator data time stamps in ms from the beginning of the day, for each slice
-* `trace::Array{Float64, 2}` - physiological trace recording. Two columns vector. The first column contains the time stamps in ms from the beginning of the day
-* `slices::Int64` - number of slices
-* `TR::Int64` - acqusition repetition time (TR)
+* `nav::Array{Float64, 4}`      - navigator phase estimates
+* `nav_time::Array{Float64, 2}` - navigator data timestamps in ms from the beginning of the day, for each slice
+* `trace::Array{Float64, 2}`    - physiological trace recording. Two columns vector (1:time [ms], 2:trace). The first column contains the timestamps in ms from the beginning of the day.
+                                    Include time points before and after the image acquisition (at least 2 s).
+* `slices::Int64`               - number of slices
 """
-function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64, TR::Int64)
+function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64)
 
     time = trace[:,1]
     trace_data = trace[:,2] ./ findmax(trace[:,2])[1] .* pi/2
-    trace_data = smooth_trace(time, trace_data)
+    trace_data = smooth_lowpass(time, trace_data)
+    trace_data = smooth_highpass(time, trace_data)[:,1]
     nav_norm = deepcopy(nav[1,1,:,:])
-    nav_norm = smooth_nav(nav_time, nav_norm, slices)
+    nav_norm = smooth_highpass(nav_time, nav_norm, slices)
 
     # Interpolate the trace values to the navigator time points for each slice
     trace_data_int = interpolate(trace_data, time, nav_time, slices)
@@ -26,9 +29,12 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     # Invert navigator sign if the correlation is negative
     invertNavSign!(nav_norm, correlation, slices)
 
-    # Find navigator slices with higher correlationt to the trace
+    # Find navigator slices with higher correlation to the trace
     max_corr = findmax(abs.(correlation))[1]
     std_corr = std(abs.(correlation))
+    if isnan(std_corr)
+        std_corr = 1
+    end
     corr_relevant = findall(>(max_corr - 1.5*std_corr), abs.(correlation))
     size_corr_relevant = size(corr_relevant,1)
 
@@ -38,15 +44,16 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     order = sortperm(nav_time_align)
     nav_align = nav_align[order]
     nav_time_align = nav_time_align[order]
-    nav_align = smooth_trace(nav_time_align, nav_align) # smooth the signal after combining multiple slices
+    nav_align = smooth_lowpass(nav_time_align, nav_align) # smooth the signal after combining multiple slices
     nav_align = interpolate(nav_align, nav_time_align, time)
-    trace_time = align(nav_align, nav_time_align, trace_data, time, TR)
+    trace_time = align(nav_align, nav_time_align, trace_data, time)
 
     # Invert navigator sign if the correlation is negative
     invertNavSign!(nav_norm, correlation, slices)
 
     # Interpolate the trace values to the navigator time points for each slice
-    time_relevant = findall(x -> (x>(findmin(abs.(nav_time_align))[1]) && x< (findmax(abs.(nav_time_align))[1])), trace_time)
+    sampling_time = (time[end]-time[1]) / size(time,1)
+    time_relevant = findall(x -> (x>(findmin(abs.(nav_time))[1] - 5 * sampling_time) && x< (findmax(abs.(nav_time))[1]) + 5 * sampling_time), trace_time)
     trace_data_int = interpolate(trace_data[time_relevant], trace_time[time_relevant], nav_time, slices)
 
     # Compute correlation after alignemnt
@@ -74,7 +81,7 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
         end
     end
 
-    if mean(correlation) < 0.2 # consider the trace inaccurate
+    if mean(correlation) < 0.2 # check for inaccurate trace (arbitrary threshold, adjust if necessary)
         possible_wrap_slices .== false
     end
 
@@ -103,15 +110,15 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
 end
 
 """
-    trace_data = smooth_trace(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
+    trace_data = smooth_lowpass(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
 
-Smooth the physiological trace recording using a butterworth low-pass filter (cut-off frequency 0.7Hz, 3 poles)
+Smooth the physiological trace recording using a Butterworth low-pass filter (cut-off frequency 0.7Hz, 3 poles)
 
 # Arguments
 * `time::Array{Float64, 1}` - time in ms from the beginning of the day for the belt recording
 * `trace_data::Array{Float64, 1}` - belt recording
 """
-function smooth_trace(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
+function smooth_lowpass(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
 
     sampling_freq = size(time,1)/(time[end]-time[1])*1000
     filter = digitalfilter(Lowpass(0.7, fs = sampling_freq), Butterworth(3))
@@ -121,16 +128,16 @@ function smooth_trace(time::Array{Float64, 1}, trace_data::Array{Float64, 1})
 end
 
 """
-    nav_norm = smooth_nav(nav_time::Array{Float64, 2}, nav_norm::Array{Float64, 2}, slices:: Int64)
+    nav_norm = smooth_highpass(nav_time::Array{Float64, 2}, nav_norm::Array{Float64, 2}, slices:: Int64)
 
-Remove the low frequencies components from the navigatior phase estimate using a butterworth high-pass filter (cut-off frequency 0.5Hz, 3 poles)
+Remove the low frequencies components from the navigator phase estimate using a Butterworth high-pass filter (cut-off frequency 0.5Hz, 3 poles)
 
 # Arguments
-* `nav_time::Array{Float64, 2}` - navigator data time stamps in ms from the beginning of the day, for each slice
-* `nav_norm::Array{Float64, 1}` - navigator phase estimates
+* `nav_time::Array{Float64}` - navigator data timestamps in ms from the beginning of the day, for each slice
+* `nav_norm::Array{Float64}` - navigator phase estimates
 * `slices::Int64` - number of slices
 """
-function smooth_nav(nav_time::Array{Float64, 2}, nav_norm::Array{Float64, 2}, slices::Int64)
+function smooth_highpass(nav_time::Array{Float64}, nav_norm::Array{Float64}, slices = 1)
 
     sampling_freq = size(nav_time, 1) * size(nav_time,2) / (findmax(abs.(nav_time))[1] - findmin(abs.(nav_time))[1]) *1000
     filter = digitalfilter(Highpass(0.15, fs = sampling_freq), Butterworth(5))
@@ -154,7 +161,7 @@ end
                    nav_time::Union{Matrix{Float64}, Vector{Float64}},
                    time::Union{Matrix{Float64}, Vector{Float64}}, slices = 0)
 
-Interpolate the first input vector with time stamps specified in the second input to the time points specified in the third input.
+Interpolate the first input vector with timestamps specified in the second input to the time points specified in the third input.
 Return the interpolartion result.
 
 # Arguments
@@ -206,7 +213,7 @@ Return correlation = 0.1 if data is Nan.
 * `nav_int::Array{Float64, 2}` - navigator phase estimes
 * `trace_data::Array{Float64, 2}` - physiological trace recording from the respiratory belt
 * `slices::Int64` - number of slices
-* `allData::Bool` - use all the time points if true. Use only the lower time points in the belt trace if false, hopefully escluding wrapped points in the navigator
+* `allData::Bool` - use all the time points if true. Use only the lower time points in the belt trace if false, hopefully excluding wrapped points in the navigator
 """
 function signalCorrelation(nav_int::Array{Float64, 2}, trace_data::Array{Float64, 2}, slices::Int64, allData = true)
 
@@ -238,7 +245,7 @@ end
 """
     invertNavSign!(nav::Union{Array{Float64, 2}, Array{Float64, 4}}, correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
-Invert the navigator phase estimates sign if the correlation between the respiratory trace and the navigator esimates is negative.
+Invert the navigator phase estimate sign if the correlation between the respiratory trace and the navigator estimate is negative.
 
 # Arguments
 * `nav::Array{Float64, 2}` - navigator phase estimes
@@ -267,27 +274,26 @@ end
 
 
 """
-    trace_time = align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Int64)
+    trace_time = align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1})
 
-Align the signal in the first imput (time stamps in the second imput) to the signal in the third imput (time stamps in the fourth input). acquisition TR in the last input.
+Align the signal in the first imput (timestamps in the second imput) to the signal in the third imput (timestamps in the fourth input).
 Use the finddelay function from DSP.jl, find the peak of the signals cross-correlation.
 Return the new time vector for the signal in the third input.
 
 # Arguments
 * `nav_align::Array{Float64, 2}` - navigator phase estimes reshaped in one vector
-* `nav_time_align::Array{Float64, 1}` - time stamps for the navigator phase estimates in ms from the beginning of the day
+* `nav_time_align::Array{Float64, 1}` - timestamps for the navigator phase estimates in ms from the beginning of the day
 * `trace_data::Array{Float64, 1}` - respiratory belt recording  in ms from the beginning of the day
-* `time::Array{Float64, 1}` - time stamps for the respiratory belt recording in se
-* `TR::Int64` - acquisition repetition time
+* `time::Array{Float64, 1}` - timestamps for the respiratory belt recording in se
 """
-function align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1}, TR::Int64)
+function align(nav_align::Array{Float64, 1}, nav_time_align::Array{Float64, 1}, trace_data::Array{Float64, 1}, time::Array{Float64, 1})
 
     time_relevant = findall(x -> (x>(findmin(abs.(nav_time_align))[1]) && x< (findmax(abs.(nav_time_align))[1])), time)
     delay = alignsignals(trace_data[time_relevant], nav_align[time_relevant])[2]
     trace_time = time
+    sampling_freq = size(time,1)/(time[end]-time[1])*1000
 
-    if delay < TR/2
-        print(delay)
+    if  -1 < delay / sampling_freq < 1
         trace_time = circshift(time, delay)
     end
 
@@ -299,9 +305,9 @@ end
 """
     correlation = find_field_changes(correlation::Union{Array{Float64, 1}, Matrix{Float64}})
 
-Inhale air can lead to both positive and negative field variations depensing by the vertebral level.
+Inhaled air can lead to both positive and negative field variations depending on the vertebral level.
 There are two regions where the field variations change sign, at the lungs extremities.
-It is reasonable to assume that MRI using a commercial spinal coil can not allow to record both these regions in the same acquisition.
+It is reasonable to assume that MRI using a commercial spinal coil cannot allow to record both these regions in the same acquisition.
 Therefore, only one field change in the correlation sign across slices should be allowed.
 This function works only if the number of slices is bigger than 5.
 
@@ -421,7 +427,7 @@ Find wrapped points comparing the breathing related oscillations measured with t
 Return a binary array, with the same size as nav_norm and 1 if the point is idenfied as wrapped.
 
 # Arguments
-* `nav_norm::Array{Float64, 2}` - navigator phase estimes
+* `nav_norm::Array{Float64, 2}` - navigator phase estimates
 * `trace_data_int::Array{Float64, 2}` - trace data smoothed, and interpolated to the navigator time points for each slice
 * `slices::Int64` - number of slices
 """

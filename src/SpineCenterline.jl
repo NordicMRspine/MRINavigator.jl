@@ -1,10 +1,10 @@
-export ReconstructSaveMap, ReconstructMap, niftiSaveImg, callSCT
+export ReconstructSaveMap, ReconstructMap, niftiSaveImg, callSCT, findCenterline
 
 
 """
     ReconstructSaveMap(path_nifti::String, path_ref::String)
 
-Reconstruct the coil sensitivity map using the MRIReco.jl function and save it in nifti format without spatial informations.
+Reconstruct the coil sensitivity map using the MRIReco.jl function and save it in nifti format without spatial information.
 
 # Arguments
 * `path_nifti::String` - path of the nifti file. The file must have .nii extension
@@ -126,4 +126,30 @@ function callSCT(params::Dict{Symbol, Any})
         end
 
     end
+end
+
+
+"""
+    findCenterline(params::Dict{Symbol, Any})
+
+Reconstruct the reference data, call spinal cord toolbox and find spinal cord centerline.
+If trust_SCT = false in the parameters dictionary the user interaction is required in the Julia REPL.
+
+# Arguments
+* `params::Dict{Symbol, Any}` - paramerters dictionary
+
+SCT reference: https://spinalcordtoolbox.com
+"""
+function findCenterline(params::Dict{Symbol, Any})
+
+    @info "Reco and Save"
+    # reconstruct and save in nifti the refence data
+    ReconstructSaveMap(params[:path_niftiMap], params[:path_refData])
+
+    @info "Find SC Centerline"
+    # find the spinal cord centerline on the reconstructed reference data
+    if params[:comp_centerline] == true
+        callSCT(params)
+    end
+
 end

@@ -7,13 +7,11 @@ Call MRIReco.jl reconstruction function and return reconstructed image. Only sin
 
 # Arguments
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
-* `sensit::Array{Complex{T},4}` - coil sensitivity map matric computed with CompSensit(acq::AcquisitionData, thresh = 0.135)
-* `noisemat::Union{Array{Complex{T}},Nothing} = nothing` - noise data extracted from the raw datat structure with ExtractNoiseData!(rawData::RawAcquisitionData)
+* `sensit::Array{Complex{T},4}` - coil sensitivity map matrix computed with CompSensit(acq::AcquisitionData, thresh = 0.135)
+* `noisemat::Union{Array{Complex{T}},Nothing} = nothing` - noise data extracted from the raw data structure with ExtractNoiseData!(rawData::RawAcquisitionData)
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-
-
 function Reconstruct(acqd::AcquisitionData,
                     sensit::Array{Complex{T},4},
                     noisemat::Union{Array{Complex{T}},Nothing} = nothing) where {T} 
@@ -43,7 +41,7 @@ end
 """
     img = directreco(acq::AcquisitionData)
 
-Call MRIReco.jl reocnstruction function and return reconstructed image. Reconstruct coils separately.
+Call MRIReco.jl reconstruction function and return reconstructed image. Reconstruct coils separately.
 
 # Arguments
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl

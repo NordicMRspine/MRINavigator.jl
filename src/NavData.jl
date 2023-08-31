@@ -6,7 +6,6 @@ mutable struct additionalNavInput
     numechoes::Int64
     numsamples::Int64
     numlines::Int64
-    TR::Int64
     TE_nav::Float64
     dt_nav::Float64
     freq_enc_FoV::Union{Array{Int64}, Nothing}
@@ -29,7 +28,7 @@ end
         trace::Union{Matrix{Float64}, Nothing} = nothing,
         centerline::Union{Vector{Float64}, Nothing} = nothing)
 
-Construct the additional data structure that is needed as imput to navCorr!
+Construct the additional data structure that is needed as input to navCorr!
 
 # Arguments
 * `noisemat::Array{Complex{Float32}, 2}` - noise data obtained with ExtractNoiseData!
@@ -37,10 +36,11 @@ Construct the additional data structure that is needed as imput to navCorr!
 * `acqData::AcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
 
 # Optional arguments with default value = nothing
-* `acqMap::Union{AcquisitionData, Nothing} = nothing` - acquisition data structure obtained converting reference data with MRIReco.jl
-* `nav_time::Union{Array{Complex{Float32}, 2}, Nothing}` - time stamps for the navigator data obtained with ExtractNavigator (in ms from the beginning of the day)
-* `trace::Union{Matrix{Float64}, Nothing}` - respiratory trace time stamps and values in matrix with two colunms (1:time [ms], 2:trace)
-* `centerline::Union{Vector{Float64}, Nothing}` - coordinates of the spinal cord ceterline obtained with callSCT
+* `acqMap::Union{AcquisitionData, Nothing} = nothing`       - acquisition data structure obtained converting reference data with MRIReco.jl
+* `nav_time::Union{Array{Complex{Float32}, 2}, Nothing}`    - time stamps for the navigator data obtained with ExtractNavigator (in ms from the beginning of the day)
+* `trace::Union{Matrix{Float64}, Nothing}`                  - respiratory trace time stamps and values in matrix with two colunms (1:time [ms], 2:trace).
+                                                                Include time points before and after the image acquisition (at least 2 s).
+* `centerline::Union{Vector{Float64}, Nothing}`             - coordinates of the spinal cord ceterline obtained with callSCT
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
@@ -58,7 +58,6 @@ function additionalNavInput(
     numechoes = numContrasts(acqData)
     numsamples = acqData.encodingSize[1]
     numlines = convert(Int64, size(acqData.kdata[1],1)/numsamples)
-    TR = rawData.params["TR"]
 
     ii=1
     while rawData.profiles[ii].head.user_int[8] < rawData.profiles[ii+1].head.user_int[8]
@@ -73,7 +72,7 @@ function additionalNavInput(
         (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
     end
 
-    return additionalNavInput(numslices, numechoes, numsamples, numlines, TR, TE_nav, dt_nav,
+    return additionalNavInput(numslices, numechoes, numsamples, numlines, TE_nav, dt_nav,
                 freq_enc_FoV, freq_enc_samples, phase_enc_samples, nav_time, noisemat, trace, centerline) 
 
 end
