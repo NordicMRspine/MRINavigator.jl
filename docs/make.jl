@@ -5,8 +5,8 @@ makedocs(modules=[MRINavigator],
         authors = "Laura Beghini",
         pages = [
         "Home" => "index.md",
-        "Pipelines" => "Pipelines.md",
         "Getting Started" => "GettingStarted.md",
+        "Pipelines" => "Pipelines.md",
         "API" => "API.md"
         ],
         )

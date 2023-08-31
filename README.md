@@ -12,10 +12,7 @@ More details can be found in the Online Documentation (soon to be published).
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 ## How to give credit
-
-soon to be published
-
+[Optimised navigator correction of physiological field fluctuations in multi-echo GRE of the lumbar spinal cord at 3T](https://submissions.mirasmart.com/ISMRM2023/Itinerary/PresentationDetail.aspx?evdid=1673). L Beghini, G David, M D Liechti, S Büeler, S J Vannesjo. 2023. Proceedings of the International Society for Magnetic Resonance in Medicine (ISMRM).
 
 ## Community Standards
-
 This project is part of the Julia community and follows the [Julia community standards](https://julialang.org/community/standards/). 
