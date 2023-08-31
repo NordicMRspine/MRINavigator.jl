@@ -10,7 +10,7 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
 # Arguments
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
-* `tresh::Float64` - masking treshold: increase for reduced mask size, decrease for extended mask size
+* `tresh::Float64` - masking threshold: increase for reduced mask size, decrease for extended mask size
 """
 function CompSensit(acq::AcquisitionData, thresh = 0.13)
 
@@ -45,7 +45,7 @@ Return a rough mask for multiple slices that may not be homogeneous.
 # Arguments
 * `acqData::RawAcquisitionData` - acquisition data structure obtained converting raw data with MRIReco.jl
 * `slices::Int64` - number of slices in acquisition data
-* `tresh::Float64` - masking treshold: increase for reduced mask size, decrease for extended mask size
+* `tresh::Float64` - masking threshold: increase for reduced mask size, decrease for extended mask size
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
@@ -68,14 +68,14 @@ end
 """
     findConnectedComponent!(mask_slice::Array{T,2})
 
-Return the biggest connected component for a mask slice.
+Return the largest connected component for a mask slice.
 
 # Arguments
 * `mask_slice::Array{T,2}` - mask for one slice with the same resolution as the reference data
 """
 function findConnectedComponent!(mask_slice::Array{T,2}) where {T}
 
-    # Find and keep only the biggest connected componet in the image
+    # Find and keep only the largest connected component in the image
     components = label_components(mask_slice)
     measured_area = component_lengths(components)
     measured_area = measured_area[2:end] #remove background component
@@ -88,8 +88,8 @@ end
 """
     removeBehindBack!(mask_slice::Array{T,2})
 
-Removes the voxels behind the subject's back, asuming that this is in the left half side of the image.
-To do this: compute the points density in the phase encoding direction, compute the density derivative and find the maximum in  the left half of the image.
+Removes the voxels behind the subject's back, assuming that this is in the left half side of the image.
+To do this: compute the points density in the phase encoding direction, compute the density derivative and find the maximum in the left half of the image.
 Add a 3 voxels safety margin.
 
 # Arguments
@@ -128,8 +128,8 @@ Make the mask uniform for a single slice using a convex hull function.
 function homogeneousMask!(mask_slice::Array{T,2}) where{T}
 
     cartes_index_slice = CartesianIndices(mask_slice)
-    Bimask_slice = convert(BitMatrix, mask_slice)
-    hull = convexhull(Bimask_slice)
+    Bitmask_slice = convert(BitMatrix, mask_slice)
+    hull = convexhull(Bitmask_slice)
 
     push!(hull, hull[1])
     
@@ -159,7 +159,7 @@ function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acq
     sizeSensit = size(sensit)
 
     if freq_enc_samples[1] != sizeSensit[1] && freq_enc_samples[2] != sizeSensit[2]
-        @warn "The coils sensitivity maps have already been resized, the function cannot be executed."
+        @warn "The coil sensitivity maps have already been resized, the function cannot be executed."
     
     elseif freq_enc_FoV[1] < freq_enc_FoV[2] || phase_enc_FoV[1] < phase_enc_FoV[2]
         @error "The reference data field of view is smaller than the image data field of view."

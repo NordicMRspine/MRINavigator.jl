@@ -3,7 +3,7 @@ export runNavPipeline, saveNoise, loadRawData, convertRawToAcq
 """
     runNavPipeline(params::Dict{Symbol, Any})
 
-Run the navigator pipeline. Return reconstructed image and navigaotr correction output (check NavCorr!).
+Run the navigator pipeline. Return reconstructed image and navigator correction output (check NavCorr!).
 
 # Arguments
 * `params::Dict{Symbol, Any}` - MRINavigator parameter structure, check defaultNavParams() for info
@@ -19,7 +19,7 @@ function runNavPipeline(params::Dict{Symbol, Any})
     noisemat = FileIO.load(params[:path_noise], "noisemat")
 
     @info "Extract navigator data. The time stamps are accurate only for Siemens data."
-    @info "The navigaotr extraction is effective only if the navigator profile was acquired after the first image profile."
+    @info "The navigator extraction is effective only if the navigator profile was acquired after the first image profile."
     (nav, nav_time) = ExtractNavigator(rawData)
     nav_time = nav_time .* 2.5 # seconds from beginning of the day (Siemens data only)
 
@@ -134,7 +134,7 @@ function loadRawData(params::Dict{Symbol, Any})
             rawData = @set rawData.profiles[ii].head.idx.repetition = 0
         end
     else
-        ExtractNoiseData!(rawData) # remove the noise acquisition only necessary for the first rep
+        ExtractNoiseData!(rawData) # removing the noise acquisition is only necessary for the first rep
     end
     OrderSlices!(rawData)
     ReverseBipolar!(rawData)

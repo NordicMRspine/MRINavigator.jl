@@ -36,7 +36,7 @@ end
     flags = ExtractFlags(rawData::RawAcquisitionData) 
 
 Extract the acquisition flags from the MRIReco.jl raw data profiles.
-Return a 31 elements vector for each profile.
+Return a 31-element vector for each profile.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
@@ -62,7 +62,7 @@ end
 
 Extract and return the noise acquisition from the MRIReco.jl raw data.
 The noise acquisition is usually the first profile with slice = 0, contrast = 0, repetition = 0.
-The noise profile should have the 19th flag element qual to 1. Check with ExtractFlags if errors occur.
+The noise profile should have the 19th flag element equal to 1. Check this with ExtractFlags if errors occur.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
@@ -133,7 +133,7 @@ end
 
 Remove reference data that are not useful for the navigator-based correction from acquisitions with phase stabilization on Siemens scanners.
 Make sure that this is needed on your data checking the time stamps with mapVBVD in Matlab.
-Not solid to recalls.
+Not robust to repeated calls, modifies rawData.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 mapVBVD reference: https://github.com/CIC-methods/FID-A/blob/master/inputOutput/mapVBVD/README.md
@@ -177,7 +177,7 @@ end
     AdjustSubsampleIndices!(acqData::AcquisitionData)
 
 Add subsamples indices in the MRIReco.jl acquisition data structure.
-Needed when conveting data not acquired in the first repetition.
+Needed when converting data not acquired in the first repetition.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
@@ -202,7 +202,7 @@ end
 
 Extract the navigator profiles from the MRIReco.jl raw data structure.
 These are registered with the same indices (contract, slice, encoding step) as the image data for the first echo time.
-Return a navigator array and a navigator time array. The navigator array has four dimensions in order: k-space samples, coils, k-space lines, slices.
+Return a navigator array and a navigator time array. The navigator array has four dimensions in the following order: k-space samples, coils, k-space lines, slices.
 Effective only if the navigator profile was acquired after the first image profile.
     
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792

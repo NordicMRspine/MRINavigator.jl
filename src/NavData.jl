@@ -28,7 +28,7 @@ end
         trace::Union{Matrix{Float64}, Nothing} = nothing,
         centerline::Union{Vector{Float64}, Nothing} = nothing)
 
-Construct the additional data structure that is needed as imput to navCorr!
+Construct the additional data structure that is needed as input to navCorr!
 
 # Arguments
 * `noisemat::Array{Complex{Float32}, 2}` - noise data obtained with ExtractNoiseData!
