@@ -35,7 +35,7 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     if isnan(std_corr)
         std_corr = 1
     end
-    corr_relevant = findall(>(max_corr - 1.5*std_corr), abs.(correlation))
+    corr_relevant = findall(>(max_corr - 2*std_corr), abs.(correlation))
     size_corr_relevant = size(corr_relevant,1)
 
     # reshape in one vector the navigator signal from the slices with higher correlation, and align with the trace
@@ -318,8 +318,8 @@ This function works only if the number of slices is bigger than 5.
 function find_field_changes(correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
     # allow for only one change in the sign on the correlation values across slices
-    filter = digitalfilter(Lowpass(0.07, fs = 1), Butterworth(3))
-    padd_size = size(correlation, 1)
+    filter = digitalfilter(Lowpass(0.08, fs = 1), Butterworth(3))
+    padd_size = div(size(correlation, 1),2)
     corr_padd = zeros(Float64, padd_size)
     corr_filt = cat(corr_padd .= correlation[1], correlation, corr_padd .= correlation[end], dims=1)
 
@@ -447,7 +447,7 @@ function find_wrapped_points(nav_norm::Array{Float64, 2}, trace_data_int::Array{
         remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, trace_data_int[:,ii])
         wrap_min = findmax(trace_data_int[remove_extreme,ii])[1] - ((findmax(trace_data_int[remove_extreme,ii])[1] - findmin(trace_data_int[remove_extreme,ii])[1]) .*0.28)
         idx_pos = findall(x -> x >= wrap_min, trace_data_int[:,ii])
-        nav_add2pi = findall(x->x< -0.2, nav_norm[idx_pos,ii])
+        nav_add2pi = findall(x->x< -0.22, nav_norm[idx_pos,ii])
         wrapped_points[idx_pos[nav_add2pi],ii] .= 1
 
     end
