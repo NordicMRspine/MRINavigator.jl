@@ -318,7 +318,7 @@ This function works only if the number of slices is bigger than 5.
 function find_field_changes(correlation::Union{Array{Float64, 1}, Matrix{Float64}}, slices::Int64)
 
     # allow for only one change in the sign on the correlation values across slices
-    filter = digitalfilter(Lowpass(0.07, fs = 1), Butterworth(3))
+    filter = digitalfilter(Lowpass(0.075, fs = 1), Butterworth(3))
     padd_size = div(size(correlation, 1),3)
     corr_padd = zeros(Float64, padd_size)
     corr_filt = cat(corr_padd .= correlation[1], correlation, corr_padd .= correlation[end], dims=1)
