@@ -319,7 +319,7 @@ function find_field_changes(correlation::Union{Array{Float64, 1}, Matrix{Float64
 
     # allow for only one change in the sign on the correlation values across slices
     filter = digitalfilter(Lowpass(0.08, fs = 1), Butterworth(3))
-    padd_size = div(size(correlation, 1), 3)
+    padd_size = div(size(correlation, 1),3)
     corr_padd = zeros(Float64, padd_size)
     corr_filt = cat(corr_padd .= correlation[1], correlation, corr_padd .= correlation[end], dims=1)
 
@@ -445,9 +445,9 @@ function find_wrapped_points(nav_norm::Array{Float64, 2}, trace_data_int::Array{
 
         meanval = mean(trace_data_int[:,ii])
         remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, trace_data_int[:,ii])
-        wrap_min = findmax(trace_data_int[remove_extreme,ii])[1] - ((findmax(trace_data_int[remove_extreme,ii])[1] - findmin(trace_data_int[remove_extreme,ii])[1]) .*0.26)
+        wrap_min = findmax(trace_data_int[remove_extreme,ii])[1] - ((findmax(trace_data_int[remove_extreme,ii])[1] - findmin(trace_data_int[remove_extreme,ii])[1]) .*0.28)
         idx_pos = findall(x -> x >= wrap_min, trace_data_int[:,ii])
-        nav_add2pi = findall(x->x< -0.21, nav_norm[idx_pos,ii])
+        nav_add2pi = findall(x->x< -0.22, nav_norm[idx_pos,ii])
         wrapped_points[idx_pos[nav_add2pi],ii] .= 1
 
     end
