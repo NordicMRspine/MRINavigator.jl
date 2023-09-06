@@ -1,0 +1,6 @@
+[deps]
+MRINavigator = "eacce8a8-16e1-4f0a-a125-bfe7a196bd66"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+
+[compat]
+Documenter = "0.27"
