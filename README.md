@@ -1,7 +1,7 @@
 # MRINavigator
 [![Build Status](https://github.com/NordicMRspine/MRINavigator/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/NordicMRspine/MRINavigator/actions/workflows/CI.yml?query=branch%3Amain)
 [![codecov.io](https://codecov.io/github/NordicMRspine/MRINavigator/coverage.svg?branch=main)](https://codecov.io/githubNordicMRspine//MRINavigator?branch=main)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://NordicMRspine.github.io/MRINavigator/latest)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://NordicMRspine.github.io/MRINavigator/dev)
 
 
 MRINavigator.jl provides multiple navigator-based correction pipelines for magnetic resonance data. These aim at demodulating time dependent field variations. The package was developed with a focus on spinal cord imaging, however it can be used for multiple imaging applications. 
