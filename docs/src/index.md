@@ -19,6 +19,9 @@ MRINavigator provides multiple navigator-based correction pipelines for Magnetic
 !!! note
     MRINavigator.jl is newly published, and any feedback is welcome. Please report any bugs or feature requests as an Issue in Github.
 
+!!! note
+    This toolbox comes with no warranty. It is not intended for clinical or diagnostic use.
+
 ## Installation
 Start `julia` and open the package manager REPL mode by entering `]`. Then enter
 ```

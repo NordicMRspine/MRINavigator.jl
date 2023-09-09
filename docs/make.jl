@@ -1,4 +1,11 @@
-using Documenter, MRINavigator
+try
+    @eval using Documenter, MRINavigator
+catch e
+    Pkg.develop(PackageSpec(path = joinpath(@__DIR__, "..")))
+    Pkg.instantiate()
+    @eval using Documenter, MRINavigator
+end
+
  
 makedocs(modules=[MRINavigator],
         sitename = "MRINavigator.jl",
