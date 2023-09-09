@@ -6,7 +6,7 @@ using Test
 using Coverage
 using Setfield
 using Statistics
-using ImageUtils
+using Images
 
 using Scratch
 using LazyArtifacts
