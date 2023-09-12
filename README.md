@@ -7,7 +7,7 @@
 MRINavigator.jl provides multiple navigator-based correction pipelines for magnetic resonance data. These aim at demodulating time dependent field variations. The package was developed with a focus on spinal cord imaging, however it can be used for multiple imaging applications. 
 The corrections are to be applied on the raw data before the image reconstruction. MRIReco.jl can be used to reconstruct the images.
 
-More details can be found in the Online Documentation.
+More details can be found in the [Online Documentation](https://NordicMRspine.github.io/MRINavigator.jl/dev).
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
