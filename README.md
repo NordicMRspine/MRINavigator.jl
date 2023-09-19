@@ -1,6 +1,6 @@
 # MRINavigator
 [![Build Status](https://github.com/NordicMRspine/MRINavigator/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/NordicMRspine/MRINavigator/actions/workflows/CI.yml?query=branch%3Amain)
-[![codecov.io](https://codecov.io/github/NordicMRspine/MRINavigator/coverage.svg?branch=main)](https://codecov.io/githubNordicMRspine//MRINavigator?branch=main)
+[![codecov](https://codecov.io/gh/NordicMRspine/MRINavigator.jl/graph/badge.svg?token=LMOFFRQIA2)](https://codecov.io/gh/NordicMRspine/MRINavigator.jl)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://NordicMRspine.github.io/MRINavigator.jl/dev)
 
 
