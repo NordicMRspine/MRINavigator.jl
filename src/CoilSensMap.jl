@@ -78,7 +78,7 @@ function findConnectedComponent!(mask_slice::Array{T,2}) where {T}
     # Find and keep only the largest connected component in the image
     components = label_components(mask_slice)
     measured_area = component_lengths(components)
-    measured_area = measured_area[2:end] #remove background component
+    measured_area = measured_area[findfirst(isequal(first(measured_area)), measured_area)+1 : end] #remove background component
     blob = findmax(measured_area)[2]
     cartes_index_blob = findall(x -> x!=blob, components)
     mask_slice[cartes_index_blob] .= 0
