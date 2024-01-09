@@ -63,7 +63,8 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     corr_type = split(params[:corr_type], "_")
     if size(corr_type, 1) == 2
         if corr_type[2] == "unwrap"
-            (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices)
+            (wrapped_points, correlation, trace_data, trace_time, trace_data_int) =
+                find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices)
             nav = wrap_corr!(nav, wrapped_points, correlation, addData.numslices)
         end
     end
@@ -77,7 +78,7 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     # Apply the correction to the data
     apply_corr!(nav, acqData, addData.numechoes,addData.numlines, addData.numsamples, addData.numslices)
 
-    return navOutput(nav_return, centerline, correlation, wrapped_points)
+    return navOutput(nav_return, addData.nav_time, trace_data, trace_time, trace_data_int, centerline, correlation, wrapped_points)
 
 end
 
