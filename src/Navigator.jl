@@ -24,7 +24,7 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     centerline = nothing
     corr_type = split(params[:corr_type], "_")
     if corr_type[1] != "knav"
-        nav = ifftshift(ifft(fftshift(nav, [1]), [1]), [1])
+        nav = FFTW.ifftshift(FFTW.ifft(FFTW.fftshift(nav, [1]), [1]), [1])
         # noisemat = fftshift(fft(ifftshift(noisemat, [1]), [1]), [1])
 
         nav_center = div(addData.numsamples, 2)
