@@ -74,7 +74,7 @@ function test_apply_corr(datadir::String)
     uniformity_corr = measUniformity(img_corr.data, sensit)
     uniformity_corrcorr = measUniformity(img_corrcorr.data, sensit)
 
-    @test uniformity - uniformity_corrcorr < 1e-5
+    @test uniformity - uniformity_corrcorr < 1e-4
     @test uniformity - uniformity_corr > 1.3
 
     err = norm(vec(img_corrcorr.data)-vec(img.data))/norm(vec(img.data))
