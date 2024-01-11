@@ -80,8 +80,13 @@ end
 mutable struct navOutput
 
     navigator::Array{Float64, 4}
+    nav_time::Union{Array{Float64, 2}, Nothing}
+    trace_aligned::Union{Array{Float64, 1}, Nothing}
+    trace_time::Union{Array{Float64, 1}, Nothing}
+    trace_interpolated::Union{Array{Float64, 2}, Nothing}
     centerline::Union{Array{Float64, 1}, Nothing}
     correlation::Union{Array{Float64, 1}, Matrix{Float64}, Nothing}
     wrapped_points::Union{Array{Int8, 2}, Nothing}
+    
     
 end

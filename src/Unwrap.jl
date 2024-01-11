@@ -4,7 +4,7 @@ export find_wrapped
     find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace::Array{Float64, 2}, slices::Int64)
 
 Identify the position of the wrapped points in the navigator phase estimates. The respiratory belt recording is necessary.
-Return the position of the wrapped points and the correlation between each navigator slice and the trace data.
+Return the position of the wrapped points, the correlation between each navigator slice and the trace data, the aligned and interpolated trace data.
 
 # Arguments
 * `nav::Array{Float64, 4}`      - navigator phase estimates
@@ -87,7 +87,8 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
 
     nowrap_slices = findall(possible_wrap_slices .== false)
     nav_norm[:, nowrap_slices] .= 1
-    trace_data_int[:, nowrap_slices] .= 1
+    trace_data_int_lim = deepcopy(trace_data_int)
+    trace_data_int_lim[:, nowrap_slices] .= 1
 
     # renormalize nav data
     for ii = 1:slices
@@ -95,17 +96,17 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     end
 
     # compute navigator baseline
-    nav_baseline = find_baseline(nav_norm, trace_data_int, slices)
+    nav_baseline = find_baseline(nav_norm, trace_data_int_lim, slices)
 
     # reposition data to align the baseline
     for ii = 1:slices
         nav_norm[:,ii] = nav_norm[:,ii] .- nav_baseline[ii]
     end
 
-    wrapped_points = find_wrapped_points(nav_norm, trace_data_int, slices)
+    wrapped_points = find_wrapped_points(nav_norm, trace_data_int_lim, slices)
 
     # return position wrapped points and field shift direction
-    return wrapped_points, correlation
+    return wrapped_points, correlation, trace_data, trace_time, trace_data_int
 
 end
 

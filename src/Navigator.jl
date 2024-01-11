@@ -63,7 +63,8 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     corr_type = split(params[:corr_type], "_")
     if size(corr_type, 1) == 2
         if corr_type[2] == "unwrap"
-            (wrapped_points, correlation) = find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices)
+            (wrapped_points, correlation, trace_data, trace_time, trace_data_int) =
+                find_wrapped(nav, addData.nav_time, addData.trace, addData.numslices)
             nav = wrap_corr!(nav, wrapped_points, correlation, addData.numslices)
         end
     end
@@ -77,7 +78,7 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     # Apply the correction to the data
     apply_corr!(nav, acqData, addData.numechoes,addData.numlines, addData.numsamples, addData.numslices)
 
-    return navOutput(nav_return, centerline, correlation, wrapped_points)
+    return navOutput(nav_return, addData.nav_time, trace_data, trace_time, trace_data_int, centerline, correlation, wrapped_points)
 
 end
 
@@ -97,20 +98,21 @@ function comp_weights(navabs::Array{T, 4}, noisestd::Matrix{T}, lines::Int64, sl
 
     # weights[points, coils, lines, slices]
     coils = size(navabs, 2)
-    weights = zeros(size(navabs))
-    for ii=1:coils
-        weights[:,ii,:,:] = navabs[:,ii,:,:] ./ noisestd[1,ii]
-    end
+    weights = ones(size(navabs))
+    if !any(noisestd .== 0)
+        for ii=1:coils
+            weights[:,ii,:,:] = navabs[:,ii,:,:] ./ noisestd[1,ii]
+        end
 
-    weightsnorm = sum(weights, dims=(1,2))
+        weightsnorm = sum(weights, dims=(1,2))
 
-    for ii=1:lines
-        for ll=1:slices
-            weights[:,:,ii,ll] = weights[:,:,ii,ll] ./ weightsnorm[1,1,ii,ll]
+        for ii=1:lines
+            for ll=1:slices
+                weights[:,:,ii,ll] = weights[:,:,ii,ll] ./ weightsnorm[1,1,ii,ll]
+            end
         end
     end
     return weights
-
 end
 
 """
@@ -126,7 +128,7 @@ function comp_centerline_pos(addData::additionalNavInput)
     # Compute resolution and disc
     freq_enc_ref_res = addData.freq_enc_FoV[1] / addData.freq_enc_samples[1]
     freq_enc_img_res = addData.freq_enc_FoV[2] / addData.freq_enc_samples[2]
-    freq_enc_FoV_disc = Int64((addData.freq_enc_FoV[1] - addData.freq_enc_FoV[2]) / freq_enc_ref_res / 2)
+    freq_enc_FoV_disc = round(Int64,(addData.freq_enc_FoV[1] - addData.freq_enc_FoV[2]) / freq_enc_ref_res / 2)
 
     start_voxel = div(addData.freq_enc_samples[1] - addData.phase_enc_samples[1], 2)
     
