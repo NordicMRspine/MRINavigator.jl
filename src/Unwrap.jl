@@ -90,11 +90,6 @@ function find_wrapped(nav::Array{Float64, 4}, nav_time::Array{Float64, 2}, trace
     trace_data_int_lim = deepcopy(trace_data_int)
     trace_data_int_lim[:, nowrap_slices] .= 1
 
-    # renormalize nav data
-    for ii = 1:slices
-        nav_norm[:,ii] = nav_norm[:,ii] ./ findmax(nav_norm[:,ii], dims =1)[1]
-    end
-
     # compute navigator baseline
     nav_baseline = find_baseline(nav_norm, trace_data_int_lim, slices)
 
@@ -448,7 +443,7 @@ function find_wrapped_points(nav_norm::Array{Float64, 2}, trace_data_int::Array{
         remove_extreme = findall(x -> meanval - deviation < x < meanval + deviation, trace_data_int[:,ii])
         wrap_min = findmax(trace_data_int[remove_extreme,ii])[1] - ((findmax(trace_data_int[remove_extreme,ii])[1] - findmin(trace_data_int[remove_extreme,ii])[1]) .*0.28)
         idx_pos = findall(x -> x >= wrap_min, trace_data_int[:,ii])
-        nav_add2pi = findall(x->x< -0.22, nav_norm[idx_pos,ii])
+        nav_add2pi = findall(x->x< -0.7, nav_norm[idx_pos,ii])
         wrapped_points[idx_pos[nav_add2pi],ii] .= 1
 
     end
