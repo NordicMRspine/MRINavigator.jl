@@ -59,6 +59,9 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
 
     correlation = nothing
     wrapped_points = nothing
+    trace_data = nothing
+    trace_time = nothing
+    trace_data_int = nothing
     
     corr_type = split(params[:corr_type], "_")
     if size(corr_type, 1) == 2
