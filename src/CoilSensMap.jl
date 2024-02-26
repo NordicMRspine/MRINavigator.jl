@@ -162,7 +162,7 @@ function ResizeSensit!(sensit::Array{Complex{T},4}, acqMap::AcquisitionData, acq
         @warn "The coil sensitivity maps have already been resized, the function cannot be executed."
     
     elseif freq_enc_FoV[1] < freq_enc_FoV[2] || phase_enc_FoV[1] < phase_enc_FoV[2]
-        @error "The reference data field of view is smaller than the image data field of view."
+        @warn "The reference data field of view is smaller than the image data field of view."
         
         expand_freq = 0
         expand_phase = 0

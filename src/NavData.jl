@@ -73,8 +73,10 @@ function additionalNavInput(
         expand_freq = 0
         expand_phase = 0
         if freq_enc_FoV[1] < freq_enc_FoV[2]
+            @warn "The reference data field of view is smaller than the image data field of view."
             expand_freq = ceil(Int64, (freq_enc_FoV[2] - freq_enc_FoV[1]) / (freq_enc_FoV[1]/freq_enc_samples[1]))
         elseif phase_enc_FoV[1] < phase_enc_FoV[2]
+            @warn "The reference data field of view is smaller than the image data field of view."
             expand_phase = ceil(Int64, (phase_enc_FoV[2] - phase_enc_FoV[1])/ (phase_enc_FoV[1]/phase_enc_samples[1]))
         end
         freq_enc_FoV[1] = freq_enc_FoV[1] + expand_freq * freq_enc_FoV[1]/freq_enc_samples[1]
