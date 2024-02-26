@@ -9,13 +9,14 @@ Reconstruct the coil sensitivity map using the MRIReco.jl function and save it i
 # Arguments
 * `path_nifti::String` - path of the nifti file. The file must have .nii extension
 * `path_rep::String` - path of reference data in ISMRMRD format
+* `tresh::Float64` - masking threshold: increase for reduced mask size, decrease for extended mask size
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 ISMRMRD reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.26089
 """
-function ReconstructSaveMap(path_nifti::String, path_ref::String)
+function ReconstructSaveMap(path_nifti::String, path_ref::String, thresh = 0.13)
 
-    (img, acq) = ReconstructMap(path_ref)
+    (img, acq) = ReconstructMap(path_ref, thresh)
     start_voxel = div(acq.encodingSize[1] -  acq.encodingSize[2], 2)
     img = img[start_voxel+1 : start_voxel+acq.encodingSize[2], :, :]
     
@@ -31,17 +32,18 @@ Reconstruct the coil sensitivity map using the MRIReco.jl function.
 
 # Arguments
 * `path_rep::String` - path of reference data in ISMRMRD format
+* `tresh::Float64` - masking threshold: increase for reduced mask size, decrease for extended mask size
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 ISMRMRD reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.26089
 """
-function ReconstructMap(path_ref::String)
+function ReconstructMap(path_ref::String, thresh = 0.13)
 
     raw = RawAcquisitionData(ISMRMRDFile(path_ref))
     OrderSlices!(raw)
 
     acq = AcquisitionData(raw, estimateProfileCenter=true)
-    sensit = CompSensit(acq)
+    sensit = CompSensit(acq, thresh)
     img = Reconstruct(acq, sensit)
     
     return img, acq

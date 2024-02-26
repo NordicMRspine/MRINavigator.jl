@@ -233,9 +233,10 @@ function ExtractNavigator(rawData::RawAcquisitionData)
     slices = slices[contrastsIndx]
     lines = lines[contrastsIndx]
 
-    nav = zeros(typeof(rawData.profiles[1].data[1,1]), size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2], rawData.params["reconSize"][2], numberslices)
+    nav = zeros(typeof(rawData.profiles[1].data[1,1]), size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2],
+        rawData.params["enc_lim_kspace_encoding_step_1"].maximum+1, numberslices)
 
-    nav_time = zeros(Float64, rawData.params["reconSize"][2], numberslices)
+    nav_time = zeros(Float64, rawData.params["enc_lim_kspace_encoding_step_1"].maximum+1, numberslices)
 
     #Odd indexes are data first echo, Even indexes are navigator data
     for ii = 2:2:length(slices)
