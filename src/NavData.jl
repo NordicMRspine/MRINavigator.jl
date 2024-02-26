@@ -8,7 +8,7 @@ mutable struct additionalNavInput
     numlines::Int64
     TE_nav::Float64
     dt_nav::Float64
-    freq_enc_FoV::Union{Array{Int64}, Nothing}
+    freq_enc_FoV::Union{Array{Float64}, Nothing}
     freq_enc_samples::Union{Array{Int64}, Nothing}
     phase_enc_samples::Union{Array{Int64}, Nothing}
     nav_time::Union{Array{Float64, 2}, Nothing}
@@ -70,6 +70,17 @@ function additionalNavInput(
 
     if !isnothing(acqMap) && !isnothing(acqData)
         (freq_enc_FoV, freq_enc_samples, phase_enc_FoV, phase_enc_samples) = Find_scaling_sensit(acqMap, acqData)
+        expand_freq = 0
+        expand_phase = 0
+        if freq_enc_FoV[1] < freq_enc_FoV[2]
+            expand_freq = ceil(Int64, (freq_enc_FoV[2] - freq_enc_FoV[1]) / (freq_enc_FoV[1]/freq_enc_samples[1]))
+        elseif phase_enc_FoV[1] < phase_enc_FoV[2]
+            expand_phase = ceil(Int64, (phase_enc_FoV[2] - phase_enc_FoV[1])/ (phase_enc_FoV[1]/phase_enc_samples[1]))
+        end
+        freq_enc_FoV[1] = freq_enc_FoV[1] + expand_freq * freq_enc_FoV[1]/freq_enc_samples[1]
+        freq_enc_samples[1] = freq_enc_samples[1] + expand_freq
+        #phase_enc_FoV[1] = phase_enc_FoV[1] + expand_phase * phase_enc_FoV[1]/phase_enc_samples[1]
+        phase_enc_samples[1] = phase_enc_samples[1] + expand_phase
     end
 
     return additionalNavInput(numslices, numechoes, numsamples, numlines, TE_nav, dt_nav,
