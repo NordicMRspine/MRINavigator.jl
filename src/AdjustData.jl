@@ -313,4 +313,6 @@ function selectSlice!(acqd::AcquisitionData, idx_slice::Vector{Int64}, nav::Unio
 
     end
 
+    return nav, nav_time
+
 end
