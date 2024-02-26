@@ -1,6 +1,7 @@
 # Get started
 
-There are available [user examples](https://github.com/NordicMRspine/UserExample_MRINavigator) to get started. The user needs to provide their own data to run the pipelines, as there are currently no example data available.
+There are available [user examples](https://github.com/NordicMRspine/UserExample_MRINavigator) to get started.
+Example data can be downloaded [here](). The user can also test the pipelines on their own data.
 
 ## Data requirements
 The navigator based correction can only be applied on the raw data of a gradient echo acquisitions in [MRD format](https://ismrmrd.readthedocs.io/en/latest/index.html). The gradient echo acquisition can be multi-echo or single-echo. One requirement on the acquisiton is to have maximum one concatenation, meaning that the sequence repetition time (TR) shold be long enough to acquire one line in every slice. This is necessary to correctly identify and remove the reference data from the Siemens scans. The gradient echo acquisition must include a navigator readout through the center of k-space at __the end__ of each TR. During the acquisition, it is advisable to collect the signal from a respiratory belt as a reference. This can be used to unwrap the navigator's phase estimates if phase wrapping is present.
