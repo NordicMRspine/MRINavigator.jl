@@ -15,6 +15,7 @@ Define default parameters for data loading, navigator correction and image recon
 * `use_centerline::Bool`              - use the spinal cord centerline information in the navigator-based correction
 * `corr_type::String`                 - correction type. Options: "none", "knav", "FFT", "FFT_unwrap"
 * `FFT_interval::String`              - interval in mm to be considered for the FFT based approach
+* `mask_thresh::String`               - masking threshold: increase for reduced mask size, decrease for extended mask size
 
 # Additional required parameters are
 * `path_imgData::String`              - path to the image data file in ISMRMRD format
@@ -44,6 +45,7 @@ function defaultNavParams()
     params[:use_centerline] = true
     params[:corr_type] = "FFT"
     params[:FFT_interval] = 35 # [millimiters]
+    params[:mask_thresh] = 0.13
   
     return params
   end
