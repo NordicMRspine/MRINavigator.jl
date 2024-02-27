@@ -145,7 +145,7 @@ SCT reference: https://spinalcordtoolbox.com
 function findCenterline(params::Dict{Symbol, Any})
 
     if params[:comp_centerline] == true
-        @info "Reco and Save"
+        @info "Reco reference scan and Save"
         # reconstruct and save in nifti format the refence data
         ReconstructSaveMap(params[:path_niftiMap], params[:path_refData], params[:mask_thresh])
 
