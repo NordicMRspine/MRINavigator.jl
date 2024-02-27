@@ -105,8 +105,7 @@ function saveNoise(path_imgData::String, path_noise::String)
     @info "Load first rep, save noise acquisition"
     # load the first repetition, slice and echo and save the noise acquisition for optimal results
     # the noise acquisition is saved in the first repetition only
-    rawData = RawAcquisitionData(ISMRMRDFile(path_imgData),
-            slice = 0, contrast = 0, repetition = 0)
+    rawData = RawAcquisitionData(ISMRMRDFile(path_imgData), repetition = 0)
     noisemat = ExtractNoiseData!(rawData)
     FileIO.save(path_noise,"noisemat",noisemat)
 
