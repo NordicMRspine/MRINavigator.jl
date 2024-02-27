@@ -69,7 +69,7 @@ function runNavPipeline(params::Dict{Symbol, Any})
     #Load trace
     trace = nothing
     if params[:corr_type] == "FFT_unwrap"
-        trace = read(matopen(params[:path_physio] * string(params[:rep]+1) * ".mat"), "data")
+        trace = read(matopen(params[:path_physio]), "data")
     end
 
     @info "nav corr"
