@@ -267,9 +267,9 @@ Extract one or more echoes from the acquisition data structure
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function selectEcho!(acqd::AcquisitionData, idx_echo::Vector{Int64})
+function selectEcho!(acqd::AcquisitionData, idx_echo::Union{Vector{Int64}, Nothing})
 
-    if !isempty(idx_echo)
+    if !isnothing(idx_echo)
 
         contrasts = size(acqd.kdata)[1]
         indices = Vector{Int64}(undef, contrasts)
@@ -301,16 +301,18 @@ Extract one or more echoes from the acquisition data structure
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function selectSlice!(acqd::AcquisitionData, idx_slice::Vector{Int64}, nav::Union{Array{Complex{T}, 4}, Nothing} = nothing, nav_time::Union{Array{Float64, 2}, Nothing} = nothing) where {T}
+function selectSlice!(acqd::AcquisitionData, idx_slice::Union{Vector{Int64}, Nothing}, nav::Union{Array{Complex{T}, 4}, Nothing} = nothing, nav_time::Union{Array{Float64, 2}, Nothing} = nothing) where {T}
 
     # get kdata from slice
-    acqd.kdata = acqd.kdata[:,idx_slice,:]
+    if !isnothing(idx_slice)
+        acqd.kdata = acqd.kdata[:,idx_slice,:]
 
-    if !isnothing(nav) && !isnothing(nav_time)
+        if !isnothing(nav) && !isnothing(nav_time)
 
-        nav = nav[:,:,:,idx_slice]
-        nav_time = nav_time[:,idx_slice]
+            nav = nav[:,:,:,idx_slice]
+            nav_time = nav_time[:,idx_slice]
 
+        end
     end
 
     return nav, nav_time

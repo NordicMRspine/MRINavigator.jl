@@ -6,8 +6,8 @@ export defaultNavParams
 Define default parameters for data loading, navigator correction and image reconstruction.
 
 # Default parameters options are
-* `slices::Union{Nothing, Vector}`    - number of the slices to be loaded, nothing means all slices
-* `echoes::Union{Nothing, Vector}`    - number of the echoes to be loaded, nothing means all echoes
+* `slices::Union{Nothing, Vector}`    - a vector containing the number of the slices to be loaded, nothing means all slices
+* `echoes::Union{Nothing, Vector}`    - a vector containing the number of the echoes to be loaded, nothing means all echoes
 * `rep::Int`                          - repetition to be loaded, the first repetition is 0. It is mandatory to select one
 * `comp_sensit::Bool`                 - compute the sensitivity maps using the reference scan
 * `comp_centerline::Bool`             - use the Spinal Cord Toolbox (SCT) to find the centerlne position
