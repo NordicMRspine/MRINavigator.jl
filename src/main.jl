@@ -27,7 +27,7 @@ function runNavPipeline(params::Dict{Symbol, Any})
 
     # slice and echo selection on acquisition data
     selectEcho!(acqData, params[:echoes])
-    selectSlice!(acqData, params[:slices], nav, nav_time)
+    (nav, nav_time) = selectSlice!(acqData, params[:slices], nav, nav_time)
 
     @info "read ref data"
     # read reference data
@@ -38,13 +38,15 @@ function runNavPipeline(params::Dict{Symbol, Any})
     @info "sensemaps"
     ## compute or load the coil sensitivity map
     if params[:comp_sensit]
-        CompResizeSaveSensit(acqMap, acqData, params[:path_sensit])
+        CompResizeSaveSensit(acqMap, acqData, params[:path_sensit], params[:mask_thresh])
     end
 
     #Load coil sensitivity
     sensit = FileIO.load(params[:path_sensit], "sensit")
-    sensit = reshape(sensit[:,:,params[:slices],:],(size(sensit,1), size(sensit,2),
-        size(params[:slices],1), size(sensit,4)))
+    if !isnothing(params[:slices])
+        sensit = reshape(sensit[:,:,params[:slices],:],(size(sensit,1), size(sensit,2),
+            size(params[:slices],1), size(sensit,4)))
+    end
 
     # Load centerline (ON LINUX: file is centerline.csv, ON WINDOWS AND MAC: is centerline.nii.csv)
     centerline = nothing
@@ -59,7 +61,9 @@ function runNavPipeline(params::Dict{Symbol, Any})
             end
         end
         centerline = centerline.Column1
-        centerline = centerline[params[:slices]]
+        if !isnothing(params[:slices])
+            centerline = centerline[params[:slices]]
+        end
     end
 
     #Load trace

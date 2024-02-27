@@ -143,10 +143,10 @@ If trust_SCT = false in the parameters dictionary the user interaction is requir
 SCT reference: https://spinalcordtoolbox.com
 """
 function findCenterline(params::Dict{Symbol, Any})
-
+    
     @info "Reco and Save"
     # reconstruct and save in nifti the refence data
-    ReconstructSaveMap(params[:path_niftiMap], params[:path_refData])
+    ReconstructSaveMap(params[:path_niftiMap], params[:path_refData], params[:mask_thresh])
 
     @info "Find SC Centerline"
     # find the spinal cord centerline on the reconstructed reference data
