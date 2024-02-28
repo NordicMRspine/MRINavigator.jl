@@ -9,7 +9,7 @@ The corrections are to be applied on the raw data before the image reconstructio
 
 More details can be found in the [online documentation](https://NordicMRspine.github.io/MRINavigator.jl/dev).
 
-[Examples scripts and results](https://github.com/NordicMRspine/UserExample_MRINavigator/tree/main) are also available.
+Example [data](), [scripts and results](https://github.com/NordicMRspine/UserExample_MRINavigator/tree/main) are also available.
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 
