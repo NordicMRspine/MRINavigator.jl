@@ -1,6 +1,6 @@
 # Get started
 
-Example data acquired on a phantom can be downloaded [here]().
+Example data acquired on a phantom can be downloaded [here](https://doi.org/10.5281/zenodo.10731729).
 There are available [examples scripts and expected results](https://github.com/NordicMRspine/UserExample_MRINavigator) to get started.
 
 ## Data requirements
@@ -9,7 +9,7 @@ The navigator based correction can only be applied on the raw data of a gradient
 Other than the main acquisition, which is usually undersampled, a lower resolution, fully sampled scan is also necessary to compute the [coils sensitivity maps](https://doi.org/10.1002/mrm.1241) and reconstruct the images. This low-resolution scan is also called a reference scan and should include only one echo. It is possible to extract a single echo from a multi echo acquisition using the `selectEcho!` function. 
 
 ## Data reshaping
-All the data should be exported from the scanner in raw format. Then they should be converted to [ISMRMRD](https://ismrmrd.readthedocs.io/en/latest/index.html) format. Siemens TWIX data can be converted to ISMRMRD using [siemens_to_ismrmrd](https://github.com/ismrmrd/siemens_to_ismrmrd). After the conversion, the data can be loaded into the Julia framework. Conversion of data from other vendors has not been explicitly tested by the authors.
+All the data should be exported from the scanner in raw format. Then they should be converted to [ISMRMRD](https://ismrmrd.readthedocs.io/en/latest/index.html) format. Siemens TWIX data can be converted to ISMRMRD using [siemens_to_ismrmrd](https://github.com/ismrmrd/siemens_to_ismrmrd). The [example data](https://doi.org/10.5281/zenodo.10731729) are in ISMRMRD format and do no require any conversion. Data in ISMRMRD format can be loaded into the Julia framework. Conversion of data from other vendors has not been explicitly tested by the authors.
 The repiratory belt recording must be synchronised with the time stamps in the image acquisition (i.e resampled). Then they must be saved in a two-column vector (1:time [ms], 2:trace) in .mat format. Each repetition should be in a different file. The time should be expressed in seconds from the beginning of the day and contain time points before and after the image acquisition (at least 4 s).
 
 ## The parameters dictionary
