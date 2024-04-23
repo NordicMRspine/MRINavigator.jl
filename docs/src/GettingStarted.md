@@ -29,6 +29,7 @@ params[:trust_SCT] = false
 params[:use_centerline] = true
 params[:corr_type] = "FFT_unwrap"
 params[:FFT_interval] = 35 # millimetres
+params[:mask_thresh] = 0.13
 params[:root_path] = "/Users/me/my_data/"
 
 params[:label] = params[:corr_type] * "_rep_" * string(params[:rep])

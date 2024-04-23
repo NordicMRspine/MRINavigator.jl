@@ -236,9 +236,10 @@ function ExtractNavigator(rawData::RawAcquisitionData)
     slices = slices[contrastsIndx]
     lines = lines[contrastsIndx]
 
-    nav = zeros(typeof(rawData.profiles[1].data[1,1]), size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2], rawData.params["reconSize"][2], numberslices)
+    nav = zeros(typeof(rawData.profiles[1].data[1,1]), size(rawData.profiles[1].data)[1], size(rawData.profiles[1].data)[2],
+        rawData.params["enc_lim_kspace_encoding_step_1"].maximum+1, numberslices)
 
-    nav_time = zeros(Float64, rawData.params["reconSize"][2], numberslices)
+    nav_time = zeros(Float64, rawData.params["enc_lim_kspace_encoding_step_1"].maximum+1, numberslices)
 
     #Odd indexes are data first echo, Even indexes are navigator data
     for ii = 2:2:length(slices)
@@ -269,9 +270,9 @@ Extract one or more echoes from the acquisition data structure
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function selectEcho!(acqd::AcquisitionData, idx_echo::Vector{Int64})
+function selectEcho!(acqd::AcquisitionData, idx_echo::Union{Vector{Int64}, Nothing})
 
-    if !isempty(idx_echo)
+    if !isnothing(idx_echo)
 
         contrasts = size(acqd.kdata)[1]
         indices = Vector{Int64}(undef, contrasts)
@@ -303,16 +304,20 @@ Extract one or more echoes from the acquisition data structure
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 """
-function selectSlice!(acqd::AcquisitionData, idx_slice::Vector{Int64}, nav::Union{Array{Complex{T}, 4}, Nothing} = nothing, nav_time::Union{Array{Float64, 2}, Nothing} = nothing) where {T}
+function selectSlice!(acqd::AcquisitionData, idx_slice::Union{Vector{Int64}, Nothing}, nav::Union{Array{Complex{T}, 4}, Nothing} = nothing, nav_time::Union{Array{Float64, 2}, Nothing} = nothing) where {T}
 
     # get kdata from slice
-    acqd.kdata = acqd.kdata[:,idx_slice,:]
+    if !isnothing(idx_slice)
+        acqd.kdata = acqd.kdata[:,idx_slice,:]
 
-    if !isnothing(nav) && !isnothing(nav_time)
+        if !isnothing(nav) && !isnothing(nav_time)
 
-        nav = nav[:,:,:,idx_slice]
-        nav_time = nav_time[:,idx_slice]
+            nav = nav[:,:,:,idx_slice]
+            nav_time = nav_time[:,idx_slice]
 
+        end
     end
+
+    return nav, nav_time
 
 end

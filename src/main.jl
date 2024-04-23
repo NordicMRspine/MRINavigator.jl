@@ -27,7 +27,7 @@ function runNavPipeline(params::Dict{Symbol, Any})
 
     # slice and echo selection on acquisition data
     selectEcho!(acqData, params[:echoes])
-    selectSlice!(acqData, params[:slices], nav, nav_time)
+    (nav, nav_time) = selectSlice!(acqData, params[:slices], nav, nav_time)
 
     @info "read ref data"
     # read reference data
@@ -38,13 +38,15 @@ function runNavPipeline(params::Dict{Symbol, Any})
     @info "sensemaps"
     ## compute or load the coil sensitivity map
     if params[:comp_sensit]
-        CompResizeSaveSensit(acqMap, acqData, params[:path_sensit])
+        CompResizeSaveSensit(acqMap, acqData, params[:path_sensit], params[:mask_thresh])
     end
 
     #Load coil sensitivity
     sensit = FileIO.load(params[:path_sensit], "sensit")
-    sensit = reshape(sensit[:,:,params[:slices],:],(size(sensit,1), size(sensit,2),
-        size(params[:slices],1), size(sensit,4)))
+    if !isnothing(params[:slices])
+        sensit = reshape(sensit[:,:,params[:slices],:],(size(sensit,1), size(sensit,2),
+            size(params[:slices],1), size(sensit,4)))
+    end
 
     # Load centerline (ON LINUX: file is centerline.csv, ON WINDOWS AND MAC: is centerline.nii.csv)
     centerline = nothing
@@ -59,13 +61,15 @@ function runNavPipeline(params::Dict{Symbol, Any})
             end
         end
         centerline = centerline.Column1
-        centerline = centerline[params[:slices]]
+        if !isnothing(params[:slices])
+            centerline = centerline[params[:slices]]
+        end
     end
 
     #Load trace
     trace = nothing
     if params[:corr_type] == "FFT_unwrap"
-        trace = read(matopen(params[:path_physio] * string(params[:rep]+1) * ".mat"), "data")
+        trace = read(matopen(params[:path_physio]), "data")
     end
 
     @info "nav corr"
@@ -101,8 +105,7 @@ function saveNoise(path_imgData::String, path_noise::String)
     @info "Load first rep, save noise acquisition"
     # load the first repetition, slice and echo and save the noise acquisition for optimal results
     # the noise acquisition is saved in the first repetition only
-    rawData = RawAcquisitionData(ISMRMRDFile(path_imgData),
-            slice = 0, contrast = 0, repetition = 0)
+    rawData = RawAcquisitionData(ISMRMRDFile(path_imgData), repetition = 0)
     noisemat = ExtractNoiseData!(rawData)
     FileIO.save(path_noise,"noisemat",noisemat)
 
