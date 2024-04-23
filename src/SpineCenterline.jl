@@ -2,20 +2,21 @@ export ReconstructSaveMap, ReconstructMap, niftiSaveImg, callSCT, findCenterline
 
 
 """
-    ReconstructSaveMap(path_nifti::String, path_ref::String)
+    ReconstructSaveMap(path_nifti::String, path_ref::String, thresh::Float64)
 
 Reconstruct the coil sensitivity map using the MRIReco.jl function and save it in nifti format without spatial information.
 
 # Arguments
 * `path_nifti::String` - path of the nifti file. The file must have .nii extension
 * `path_rep::String` - path of reference data in ISMRMRD format
+* `thresh::Float64` - masking threshold: increase for reduced mask size, decrease for extended mask size
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 ISMRMRD reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.26089
 """
-function ReconstructSaveMap(path_nifti::String, path_ref::String)
+function ReconstructSaveMap(path_nifti::String, path_ref::String, thresh = 0.13)
 
-    (img, acq) = ReconstructMap(path_ref)
+    (img, acq) = ReconstructMap(path_ref, thresh)
     start_voxel = div(acq.encodingSize[1] -  acq.encodingSize[2], 2)
     img = img[start_voxel+1 : start_voxel+acq.encodingSize[2], :, :]
     
@@ -31,17 +32,18 @@ Reconstruct the coil sensitivity map using the MRIReco.jl function.
 
 # Arguments
 * `path_rep::String` - path of reference data in ISMRMRD format
+* `thresh::Float64` - masking threshold: increase for reduced mask size, decrease for extended mask size
 
 MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 ISMRMRD reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.26089
 """
-function ReconstructMap(path_ref::String)
+function ReconstructMap(path_ref::String, thresh = 0.13)
 
     raw = RawAcquisitionData(ISMRMRDFile(path_ref))
     OrderSlices!(raw)
 
     acq = AcquisitionData(raw, estimateProfileCenter=true)
-    sensit = CompSensit(acq)
+    sensit = CompSensit(acq, thresh)
     img = Reconstruct(acq, sensit)
     
     return img, acq
@@ -142,13 +144,13 @@ SCT reference: https://spinalcordtoolbox.com
 """
 function findCenterline(params::Dict{Symbol, Any})
 
-    @info "Reco and Save"
-    # reconstruct and save in nifti the refence data
-    ReconstructSaveMap(params[:path_niftiMap], params[:path_refData])
-
-    @info "Find SC Centerline"
-    # find the spinal cord centerline on the reconstructed reference data
     if params[:comp_centerline] == true
+        @info "Reco reference scan and Save"
+        # reconstruct and save in nifti format the refence data
+        ReconstructSaveMap(params[:path_niftiMap], params[:path_refData], params[:mask_thresh])
+
+        @info "Find SC Centerline"
+        # find the spinal cord centerline on the reconstructed reference data
         callSCT(params)
     end
 
