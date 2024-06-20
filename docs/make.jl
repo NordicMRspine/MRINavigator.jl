@@ -19,7 +19,7 @@ makedocs(modules=[MRINavigator],
         )
  
 deploydocs(;
-    repo = "github.com/NordicMRspine/MRINavigator",
+    repo = "github.com/NordicMRspine/MRINavigator.jl",
     push_preview = true,
     deploy_config = Documenter.GitHubActions(),
     )
