@@ -43,11 +43,16 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     end
 
     remove_ref_ph!(nav, addData.numlines, 1) # remove the reference phase
-    noisestd = std(addData.noisemat, dims=[1]).^2
+    if addData.noisemat != nothing
+        noisestd = std(addData.noisemat, dims=[1]).^2
 
-    # Compute weights for the coils average
-    weights = comp_weights(abs.(nav), noisestd, addData.numlines, addData.numslices)
-    nav = sum(weights .* nav, dims=(1,2,)) # coils and samples average for each line
+        # Compute weights for the coils average
+        weights = comp_weights(abs.(nav), noisestd, addData.numlines, addData.numslices)
+        nav = sum(weights .* nav, dims=(1,2,)) # coils and samples average for each line
+    
+    else
+        nav = sum(nav, dims=(1,2,))
+    end
 
     # Compute navigator phase
     cartes_index = findall(x -> isnan(x), nav)
