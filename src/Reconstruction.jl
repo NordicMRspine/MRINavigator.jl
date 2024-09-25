@@ -18,7 +18,7 @@ function Reconstruct(acqd::AcquisitionData,
 
     params = Dict{Symbol, Any}()
     params[:reco] = "multiCoil"
-    #params[:solver] = "cgnr"
+    params[:solver] = "cgnr"
     params[:regularization] = "L2"
     params[:λ] = 1.e-2
     params[:iterations] = 10
