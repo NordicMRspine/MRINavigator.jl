@@ -16,8 +16,6 @@ function Reconstruct(acqd::AcquisitionData,
                     sensit::Array{Complex{T},4},
                     noisemat::Union{Array{Complex{T}},Nothing} = nothing) where {T} 
 
-    using MRIReco.RegularizedLeastSquares # This is necessary until MRIReco is fixed
-
     params = Dict{Symbol, Any}()
     params[:reco] = "multiCoil"
     params[:reconSize] = (acqd.encodingSize[1],acqd.encodingSize[2])
