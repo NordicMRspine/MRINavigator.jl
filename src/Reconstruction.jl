@@ -16,14 +16,15 @@ function Reconstruct(acqd::AcquisitionData,
                     sensit::Array{Complex{T},4},
                     noisemat::Union{Array{Complex{T}},Nothing} = nothing) where {T} 
 
+    using MRIReco.RegularizedLeastSquares # This is necessary until MRIReco is fixed
+
     params = Dict{Symbol, Any}()
     params[:reco] = "multiCoil"
-    params[:solver] = "cgnr"
-    params[:regularization] = "L2"
-    params[:λ] = 1.e-2
-    params[:iterations] = 10
     params[:reconSize] = (acqd.encodingSize[1],acqd.encodingSize[2])
     params[:estimateProfileCenter] = true
+    params[:reg] = L2Regularization(1.e-2)
+    params[:solver] = CGNR
+    params[:iterations] = 10
     params[:senseMaps] = sensit
 
     if !isnothing(noisemat)
