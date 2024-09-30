@@ -43,11 +43,16 @@ function NavCorr!(nav::Array{Complex{T}, 4}, acqData::AcquisitionData, params::D
     end
 
     remove_ref_ph!(nav, addData.numlines, 1) # remove the reference phase
-    noisestd = std(addData.noisemat, dims=[1]).^2
+    if addData.noisemat != nothing
+        noisestd = std(addData.noisemat, dims=[1]).^2
 
-    # Compute weights for the coils average
-    weights = comp_weights(abs.(nav), noisestd, addData.numlines, addData.numslices)
-    nav = sum(weights .* nav, dims=(1,2,)) # coils and samples average for each line
+        # Compute weights for the coils average
+        weights = comp_weights(abs.(nav), noisestd, addData.numlines, addData.numslices)
+        nav = sum(weights .* nav, dims=(1,2,)) # coils and samples average for each line
+    
+    else
+        nav = sum(nav, dims=(1,2,))
+    end
 
     # Compute navigator phase
     cartes_index = findall(x -> isnan(x), nav)
@@ -253,8 +258,7 @@ function wrap_corr!(nav::Array{Float64, 4}, wrapped_points::Array{Int8, 2}, corr
 
     invertNavSign!(nav, correlation, slices)
     wrapped_points_local = reshape(wrapped_points, (1, 1, size(wrapped_points)...))
-    idx_pos = findall(x->x==1, wrapped_points_local)
-    nav[idx_pos] = nav[idx_pos] .+ (2*pi)
+    nav = nav .+ ((2*pi) .* wrapped_points_local)
     invertNavSign!(nav, correlation, slices)
 
     return nav
