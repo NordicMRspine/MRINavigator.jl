@@ -18,12 +18,11 @@ function Reconstruct(acqd::AcquisitionData,
 
     params = Dict{Symbol, Any}()
     params[:reco] = "multiCoil"
-    params[:solver] = "cgnr"
-    params[:regularization] = "L2"
-    params[:λ] = 1.e-2
-    params[:iterations] = 10
     params[:reconSize] = (acqd.encodingSize[1],acqd.encodingSize[2])
     params[:estimateProfileCenter] = true
+    params[:reg] = L2Regularization(1.e-2)
+    params[:solver] = CGNR
+    params[:iterations] = 10
     params[:senseMaps] = sensit
 
     if !isnothing(noisemat)
