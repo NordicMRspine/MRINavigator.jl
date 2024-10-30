@@ -173,7 +173,7 @@ function interpolate(nav_norm::Union{Matrix{Float64}, Vector{Float64}},
     if ndims(nav_norm) == 1 && ndims(time) == 1
 
         nav_int = zeros(Float64, size(time,1))
-        interp = DataInterpolations.LinearInterpolation(nav_norm, nav_time)
+        interp = DataInterpolations.LinearInterpolation(nav_norm, nav_time, extrapolate = true)
         nav_int = interp(time)
 
     elseif ndims(nav_norm) > 1 && ndims(time) == 1
