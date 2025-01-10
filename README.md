@@ -16,7 +16,10 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 ## How to give credit
 If you use this package please acknowledge us by citing:
 
-[Optimised navigator correction of physiological field fluctuations in multi-echo GRE of the lumbar spinal cord at 3T](https://submissions.mirasmart.com/ISMRM2023/Itinerary/PresentationDetail.aspx?evdid=1673). L Beghini, G David, M D Liechti, S Büeler, S J Vannesjo. 2023. Proceedings of the International Society for Magnetic Resonance in Medicine (ISMRM).
+Beghini L, Büeler S, Liechti MD, Jaffray A, David G, Vannesjo SJ. [Optimised navigator correction of physiological field fluctuations in multi-echo GRE of the lumbar spinal cord at 3T](https://doi.org/10.1101/2024.12.05.24318389). medRxiv 2024.12.05.24318389; doi: https://doi.org/10.1101/2024.12.05.24318389
 
 ## Community Standards
 This project is part of the Julia community and follows the [Julia community standards](https://julialang.org/community/standards/).
+
+## Acknowledgement
+The authors thank the ISMRM Reproducible Research Study Group for conducting a code review of the code (package version 0.1.1). The scope of the code review covered only the code’s ease of download, quality of documentation, and ability to run, but did not consider scientific accuracy or code efficiency.
