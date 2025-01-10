@@ -16,7 +16,7 @@ MRIReco reference: https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28792
 ## How to give credit
 If you use this package please acknowledge us by citing:
 
-Beghini L, Büeler S, Liechti MD, Jaffray A, David G, Vannesjo SsJ. [Optimised navigator correction of physiological field fluctuations in multi-echo GRE of the lumbar spinal cord at 3T](https://doi.org/10.1101/2024.12.05.24318389). medRxiv 2024.12.05.24318389; doi: https://doi.org/10.1101/2024.12.05.24318389
+Beghini L, Büeler S, Liechti MD, Jaffray A, David G, Vannesjo SJ. [Optimised navigator correction of physiological field fluctuations in multi-echo GRE of the lumbar spinal cord at 3T](https://doi.org/10.1101/2024.12.05.24318389). medRxiv 2024.12.05.24318389; doi: https://doi.org/10.1101/2024.12.05.24318389
 
 ## Community Standards
 This project is part of the Julia community and follows the [Julia community standards](https://julialang.org/community/standards/).
