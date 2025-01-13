@@ -51,10 +51,10 @@ function runNavPipeline(params::Dict{Symbol, Any})
     # Load centerline (ON LINUX: file is centerline.csv, ON WINDOWS AND MAC: is centerline.nii.csv)
     centerline = nothing
     if params[:use_centerline] == true
-        if Sys.islinux()
-            centerline = CSV.read(params[:path_centerline] * "centerline.csv", DataFrame, header=false)
-        else
+        if isfile(params[:path_centerline] * "centerline.nii.csv")
             centerline = CSV.read(params[:path_centerline] * "centerline.nii.csv", DataFrame, header=false)
+        else
+            centerline = CSV.read(params[:path_centerline] * "centerline.csv", DataFrame, header=false)
         end
         centerline = centerline.Column1
         if !isnothing(params[:slices])
