@@ -22,4 +22,4 @@ Beghini L, Büeler S, Liechti MD, Jaffray A, David G, Vannesjo SJ. [Optimised na
 This project is part of the Julia community and follows the [Julia community standards](https://julialang.org/community/standards/).
 
 ## Acknowledgement
-The authors thank the ISMRM Reproducible Research Study Group for conducting a code review of the code (package version 0.1.1). The scope of the code review covered only the code’s ease of download, quality of documentation, and ability to run, but did not consider scientific accuracy or code efficiency.
+The authors thank the ISMRM Reproducible Research Study Group for conducting a code review of the code (package version 0.1.1, user example version 0.0.1). The scope of the code review covered only the code’s ease of download, quality of documentation, and ability to run, but did not consider scientific accuracy or code efficiency.
