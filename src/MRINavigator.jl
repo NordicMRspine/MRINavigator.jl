@@ -1,6 +1,7 @@
 module MRINavigator
 
 using MRIReco
+using MRIReco.RegularizedLeastSquares # This is necessary until MRIReco is fixed
 using MRICoilSensitivities
 using MRIFiles
 using Statistics
